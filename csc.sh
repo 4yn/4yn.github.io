@@ -15,7 +15,7 @@ echo "Please enter new hostname:"
 
 read tmphostname
 hostname $tmphostname
-
+echo $tmphostname > /etc/hostname
 echo -e "127.0.0.1\tlocalhost\n127.0.0.1\t${tmphostname}\n" > /etc/hosts
 
 # Images
@@ -59,12 +59,15 @@ apt upgrade -y
 
 # Set UI
 
-sudo -H -u cscusr bash -c 'gsettings set org.gnome.desktop.interface gtk-theme Flatabulous; gsettings set org.gnome.desktop.interface icon-theme Ultra-Flat'
-sudo -i -u cscusr gsettings set com.canonical.Unity.Launcher favorites "['application://org.gnome.Nautilus.desktop', 'application://unity-control-center.desktop', 'application://gnome-terminal.desktop', 'application://firefox.desktop', 'application://google-chrome.desktop', 'application://sublime_text.desktop', 'unity://running-apps', 'unity://expo-icon', 'unity://devices']"
+set +o histexpand
+echo -e "#!/bin/bash\ngsettings set org.gnome.desktop.interface gtk-theme Flatabulous\ngsettings set org.gnome.desktop.interface icon-theme Ultra-Flat\ngsettings set com.canonical.Unity.Launcher favorites \"['application://org.gnome.Nautilus.desktop', 'application://unity-control-center.desktop', 'application://gnome-terminal.desktop', 'application://firefox.desktop', 'application://google-chrome.desktop', 'application://sublime_text.desktop', 'unity://running-apps', 'unity://expo-icon', 'unity://devices']\"" > /tmp/desktopconfig.sh
+chmod +x /tmp/desktopconfig.sh
+chown cscusr /tmp/desktopconfig
+sudo -H -u cscusr bash -c '/tmp/desktopconfig.sh'
 
 # Set Grub
 
 echo -e "if background_color 96,119,179,0 ; then\n  clear\nfi" > /usr/share/plymouth/themes/ubuntu-logo/ubuntu-logo.grub
-sed -i 's/GRUB_TIMEOUT=10/GRUB_TIMEOUT=-1/g' /etc/default/grub
+sed -i 's/GRUB_TIMEOUT=10/GRUB_TIMEOUT=0/g' /etc/default/grub
 
 update-grub
