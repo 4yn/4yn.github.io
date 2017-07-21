@@ -55,15 +55,12 @@ apt install nodejs npm -y
 
 # Total Update
 
-apt upgrade
+apt upgrade -y
 
 # Set UI
 
-gsettings set org.gnome.desktop.interface gtk-theme Flatabulous
-gsettings set org.gnome.desktop.interface icon-theme Ultra-Flat
-
-gsettings set com.canonical.Unity.Launcher favorites "['application://org.gnome.Nautilus.desktop', 'application://unity-control-center.desktop', 'application://gnome-terminal.desktop', 'application://firefox.desktop', 'application://google-chrome.desktop', 'application://sublime_text.desktop', 'unity://running-apps', 'unity://expo-icon', 'unity://devices']
-"
+sudo -H -u cscusr bash -c 'gsettings set org.gnome.desktop.interface gtk-theme Flatabulous; gsettings set org.gnome.desktop.interface icon-theme Ultra-Flat'
+sudo -i -u cscusr gsettings set com.canonical.Unity.Launcher favorites "['application://org.gnome.Nautilus.desktop', 'application://unity-control-center.desktop', 'application://gnome-terminal.desktop', 'application://firefox.desktop', 'application://google-chrome.desktop', 'application://sublime_text.desktop', 'unity://running-apps', 'unity://expo-icon', 'unity://devices']"
 
 # Set Grub
 
