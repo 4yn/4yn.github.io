@@ -16,7 +16,6 @@
     "type": "image/png"  
   }],
   "display": "fullscreen",
-  "orientation": "landscape",
   "background_color": "white",
   "theme_color": "yellow"
 }
