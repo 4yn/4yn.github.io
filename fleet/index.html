@@ -1,0 +1,167 @@
+<html>
+	<head>
+		<link type="text/css" rel="stylesheet" href="css/material-icons.css">
+		<link type="text/css" rel="stylesheet" href="css/materialize.min.css"/>
+		<link type="text/css" rel="stylesheet" href="css/app.css"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	</head>
+	<body>
+		<div class="navbar-fixed">
+			<nav class="nav-wrapper blue darken-1 white-text">
+				<div class="container">
+					<a href="#" class="brand-logo left">&nbspfleet</a>
+					<ul class="right">
+						<li><i class="material-icons">directions_car</i></li>
+						<li><i class="material-icons">airport_shuttle</i></li>
+					</ul>
+				</div>
+			</nav>
+		</div>
+		<div class="navbar-fixed">
+			<nav class="nav-extended">
+				<div class="nav-content blue white-text">
+					<div class="container">
+						<ul class="tabs tabs-transparent">
+							<li class="tab"><a href="#tab-trips" id="tab-trips-btn">Trips</a></li>
+							<li class="tab"><a href="#tab-statistics" id="tab-stats-btn">Statistics</a></li>
+						</ul>
+					</div>
+				</div>
+			</nav>
+		</div>
+		<div id="tab-trips">
+			<div class="container">
+				<div class="row" id="display-trip-wrapper">
+					<div class="col s12 m6 display-trip-entry" id="display-trip-template" style="display: none;"><div class="card">
+						<div class="display-trip-date-sort" style="display: none;">0</div>
+						<div class="card-content">
+							<div class="row">
+								<div class="col s6 right-align">
+									<span class="card-title display-trip-plate">12345ABC</span>
+								</div>
+								<div class="col s6 left-align">
+									<span class="card-title display-trip-mileage">12km</span>
+								</div>
+								<div class="col s6 right-align display-trip-date-stamp">
+									123456 7890hrs
+								</div>
+								<div class="col s6 left-align display-trip-odo">
+									12345 - 67890
+								</div>
+							</div>
+							<a href="#edit-trip-modal" class="btn-floating halfway-fab teal darken-1 modal-trigger display-trip-modify"><i class="material-icons">create</i></a>
+						</div>
+					</div></div>
+					<div class="col s12 center" id="display-trip-loading"><div class="preloader-wrapper big active">
+						<div class="spinner-layer spinner-blue-only">
+							<div class="circle-clipper left">
+								<div class="circle"></div>
+							</div>
+							<div class="gap-patch">
+								<div class="circle"></div>
+							</div>
+							<div class="circle-clipper right">
+								<div class="circle"></div>
+							</div>
+						</div>
+					</div></div>
+				</div>
+			</div>
+			<div class="fixed-action-btn">
+				<a href="#edit-trip-modal" id="edit-trip-create" class="btn-floating btn-large modal-trigger cyan darken-1"><i class="material-icons">add_box</i></a>
+			</div>
+		</div>
+		<div id="tab-statistics">
+			<div class="container">
+				<div class="row">
+					<div class="col s12 m6 l3"><div class="card">
+						<div class="card-content">
+							<span class="card-title">Total Mileage:</span>
+							<span class="card-title right-align" id="display-stats-mileage">1234</span>
+						</div>
+					</div></div>
+					<div class="col s12 m6 l3"><div class="card">
+						<div class="card-content">
+							<span class="card-title">Total Vehicles:</span>
+							<span class="card-title right-align" id="display-stats-vehicles">1234</span>
+						</div>
+					</div></div>
+					<div class="col s12 m6 l3"><div class="card">
+						<div class="card-content">
+							<span class="card-title">Total Platforms:</span>
+							<span class="card-title right-align" id="display-stats-platforms">1234</span>
+						</div>
+					</div></div>
+					<div class="col s12 m6 l3"><div class="card">
+						<div class="card-content">
+							<span class="card-title">Favorite Vehicle:</span>
+							<span class="card-title right-align" id="display-stats-vehicles-favorite">1234</span>
+						</div>
+					</div></div>
+					<div class="col s12"><div class="card black white-text">
+						<div class="card-content">
+							<span class="card-title">Advanced Options</span>
+							<a href="#" class="btn-large green" id="stats-import-notime"><i class="material-icons left">input</i>Import (Without Times)</a>
+							<a href="#" class="btn-large green darken-2" id="stats-import"><i class="material-icons left">input</i>Import</a>
+							<a href="#" class="btn-large red" id="stats-nuke"><i class="material-icons left">delete_sweep</i>Delete All</a>
+							<a href="#" class="btn-large blue disabled" id="stats-export-text"><i class="material-icons left">content_paste</i>Export (Clipboard)</a>
+							<a href="#" class="btn-large teal disabled" id="stats-export-excel"><i class="material-icons left">assessment</i>Export (CSV/Excel)</a>
+						</div>
+					</div></div>
+				</div>
+			</div>
+		</div>
+		<div class="modal bottom-sheet modal-fixed-footer" id="edit-trip-modal">
+			<div class="modal-content">
+				<div class="row">
+					<div class="input-field col s4 m2">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-date-day" maxlength="2"/>
+						<label for="edit-date-day">Day</label>
+					</div>
+					<div class="input-field col s4 m2">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-date-month" maxlength="2" />
+						<label for="edit-date-month">Month</label>
+					</div>
+					<div class="input-field col s4 m2">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-date-year" maxlength="2" />
+						<label for="edit-date-year">Year</label>
+					</div>
+					<div class="input-field col s6 m3">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-date-hour" maxlength="2" />
+						<label for="edit-date-hour">Hour</label>
+					</div>
+					<div class="input-field col s6 m3">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-date-minute" maxlength="2" />
+						<label for="edit-date-minute">Minute</label>
+					</div>
+					<div class="input-field col s12 m4">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-plate" maxlength="5" />
+						<label for="edit-date-plate">License Plate</label>
+					</div>
+					<div class="input-field col s6 m3">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-odo-start" maxlength="5" />
+						<label for="edit-trip-odo-start">Odometer Start</label>
+					</div>
+					<div class="input-field col s6 m3">
+						<input type="text" class="edit-trip-number-only" id="edit-trip-odo-end" maxlength="5" />
+						<label for="edit-trip-odo-end">Odometer End</label>
+					</div>
+					<div class="input-field col s12 m2">
+						<input disabled type="text" class="edit-trip-number-only" id="edit-trip-mileage" />
+						<label for="edit-trip-mileage">Mileage</label>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a href="javascript:;" class="modal-close btn-flat red darken-3 white-text left-align" id="edit-trip-delete"><i class="material-icons">delete</i></a>
+				<a href="javascript:;" class="modal-close btn-flat red white-text"><i class="material-icons left">cancel</i>Cancel</a>
+				<a href="javascript:;" class="modal-close btn-flat light-green white-text disabled" id="edit-trip-done"><i class="material-icons right">done</i>Save</a>
+			</div>
+		</div>
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/materialize.min.js"></script>
+		<script type="text/javascript" src="js/localforage.min.js"></script>
+		<script type="text/javascript" src="js/chart.bundle.min.js"></script>
+		<script type="text/javascript" src="js/app.js"></script>
+	</body>
+</html>
