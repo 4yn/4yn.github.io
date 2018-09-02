@@ -78,7 +78,9 @@ app = {
 		displayedData: {},
 		lastDisplayed: new Date(),
 		doneDisplaying: false,
-		stats: {}
+		stats: {
+			needRefresh: true
+		}
 	},
 
 	views: {
@@ -183,7 +185,6 @@ app = {
 				}
 				if(scrollTo){
 					$(window).scrollTop(entry.offset().top-150);
-					console.log('scroll');
 				};
 				if(newEntry){
 					entry.show().fadeOut(0).fadeIn(500);
@@ -260,6 +261,7 @@ app = {
 			},
 			endEdit: function(){
 				var session = app.session;
+				session.stats.needRefresh = true;
 				var data = {};
 				var fieldsInput = this.fieldsInput;
 				for(var i=0;i<fieldsInput.length;i++){
@@ -292,57 +294,97 @@ app = {
 				$('#stats-nuke').click(function(){displayStats.clearData()});
 			},
 			calcStats: function(){
+
 				var stats = app.session.stats; //
 				var trips = app.stores.trips; //
 
-				stats['vehicles'] = {};
-				stats['platforms'] = {};
-				stats['total'] = 0;
+				if(!stats.needRefresh){
+					return;
+				}
+				stats.needRefresh = false;
+
+				stats['vehicles-mileage'] = {};
+				stats['platforms-mileage'] = {};
+				stats['platforms-days-since-used'] = {};
+				stats['platforms-last-twoweek'] = {}
+				stats['total-mileage'] = 0;
 				stats['vehicles-favorite'] = null;
 				$.each(trips.data, function(id,data){
 					var plate = data['plate']
 					var mileage = Math.max(Number(data['odo-end']) - Number(data['odo-start']),0);
 					var platform = plate.substring(0,2);
-					stats['vehicles'][plate] = stats['vehicles'][plate] + mileage || mileage;
-					stats['platforms'][platform] = stats['platforms'][platform] + mileage || mileage;
-					stats['total'] = stats['total'] + mileage;
+					var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm');
+					var daysSinceUsed = moment().diff(thisMoment,'days')
+					stats['vehicles-mileage'][plate] = stats['vehicles-mileage'][plate] + mileage || mileage;
+					stats['platforms-mileage'][platform] = stats['platforms-mileage'][platform] + mileage || mileage;
+					stats['platforms-days-since-used'][platform] = Math.min(daysSinceUsed,stats['platforms-days-since-used'][platform]) || daysSinceUsed;
+					stats['total-mileage'] = stats['total-mileage'] + mileage;
 					if(stats['vehicles-favorite'] == null ||
-						stats['vehicles'][stats['vehicles-favorite']] < stats['vehicles'][plate]){
+						stats['vehicles-mileage'][stats['vehicles-favorite']] < stats['vehicles-mileage'][plate]){
 						stats['vehicles-favorite'] = plate;
 					}
 				});
 			},
 			showStats: function(){
 				var stats = app.session.stats; //
-				$('#display-stats-mileage').text(stats['total'] + 'km');
-				$('#display-stats-vehicles').text(Object.keys(stats['vehicles']).length);
-				$('#display-stats-platforms').text(Object.keys(stats['platforms']).length);
+				$('#display-stats-mileage').text(stats['total-mileage'] + 'km');
+				$('#display-stats-vehicles').text(Object.keys(stats['vehicles-mileage']).length);
+				$('#display-stats-platforms').text(Object.keys(stats['platforms-mileage']).length);
 				$('#display-stats-vehicles-favorite').text(stats['vehicles-favorite']);
+				$('#display-stats-platform-template').toggleClass('.display-stats-platform');
+				// $('.display-stats-jit').remove();
+				$('#display-stats-platform-template').toggleClass('.display-stats-platform');
+				$.each(stats['platforms-days-since-used'], function(id,data){
+					var nextChart = $('#display-stats-platform-template').clone();
+					nextChart.find('.display-stats-platform-label').text(app.restricted.plateToPlatform[id])
+					nextChart.find('.display-stats-platform-mileage').text(stats['platforms-mileage'][id] + 'km')
+					var result = 'Driven ' + data + ' day' + ((data==1)?'':'s') + ' ago, ';
+					if(data < 10){
+						result += 11-data + ' days to JIT';
+					} else if (data == 10){
+						result += 'last day before JIT';
+					} else {
+						result += 'requires JIT';
+					}
+					nextChart.find('.display-stats-platform-jit').text(result);
+					$('#display-stats-platform-template').after(nextChart);
+					nextChart.show();
+				});
 			},
 			importData: function(notime=false){
 				var trips = app.stores.trips //
 				var result = ""
 				if(notime){
-					result = prompt("[DDMMYY] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
+					result = prompt("Please paste all your mileage data below.\n[DDMMYY] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
 				} else {
-					result =  prompt("[DDMMYYHHMM] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
+					result =  prompt("Please paste all your mileage data below.\n[DDMMYYHHMM] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
 				}
 				if(result==null) return;
 				var nums = result.replace(/\D/g,' ').replace(/  +/g, ' ').split(" ");
-				console.log(nums)
-				for(var i=0;i+4<nums.length;i+=5){
-					var raw = [nums[i],nums[i+1],nums[i+2],nums[i+3],nums[i+4]];
-					var data = {}
-					app.session.editTripNow = -1;
-					data['date-ddmmyy'] = raw[0].substring(0,6);
-					if(notime){
-						data['date-hhss'] = "00:00";
-					} else {
-						data['date-hhss'] = raw[0].substring(6,8) + ':' +  raw[0].substring(8,10);
+				var toImport = [];
+				try{
+					for(var i=0;i+4<nums.length;i+=5){
+						var raw = [nums[i],nums[i+1],nums[i+2],nums[i+3],nums[i+4]];
+						var data = {}
+						app.session.editTripNow = -1;
+						data['date-ddmmyy'] = raw[0].substring(0,6);
+						if(notime){
+							data['date-hhss'] = "00:00";
+						} else {
+							data['date-hhss'] = raw[0].substring(6,8) + ':' +  raw[0].substring(8,10);
+						}
+						data['plate'] = raw[1].padZero(5);
+						data['odo-start'] = raw[2].padZero(5);
+						data['odo-end'] = raw[3].padZero(5);
+						toImport.push(data);
 					}
-					data['plate'] = raw[1].padZero(5);
-					data['odo-start'] = raw[2].padZero(5);
-					data['odo-end'] = raw[3].padZero(5);
+				} catch(err) {
+					console.log(err);
+					alert("Error occurred, data not imported.")
+					return;
+				}
+				for(var i=0;i<toImport.length;i++){
+					var data = toImport[i];
 					var id = trips.create(data);
 					app.views.displayTrip.showEntry(id);
 					app.session.displayedData[id] = true;
@@ -366,10 +408,10 @@ app = {
 	},
 	restricted: {
 		plateToPlatform: {
-			'35': 'JEEP',
-			'59': 'MB290',
-			'46': 'LR',
-			'34': '??'
+			'34': '34/??',
+			'35': '35/JEEP',
+			'46': '46/LR',
+			'59': '59/MB290'
 		}
 	}
 }

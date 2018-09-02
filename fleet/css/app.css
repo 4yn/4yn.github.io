@@ -79,7 +79,7 @@
 }
 
 .display-trip-miscbox{
-	flex: 0 0 10%;
+	flex: 0 0 25%;
 }
 
 .display-trip-date-top{
@@ -105,13 +105,17 @@
 
 .display-trip-platform{
 	font-weight: bold;
-	font-size: 20px;
+	font-size: 15px;
 }
 
 .display-trip-odo-start{
-	font-size: 20px;	
+	font-size: 15px;	
 }
 
 .display-trip-odo-end{
-	font-size: 20px;
+	font-size: 15px;
+}
+
+.display-stats-platform-label{
+	font-weight: bold !important;
 }
