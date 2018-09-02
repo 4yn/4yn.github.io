@@ -331,9 +331,9 @@ app = {
 				$('#display-stats-vehicles').text(Object.keys(stats['vehicles-mileage']).length);
 				$('#display-stats-platforms').text(Object.keys(stats['platforms-mileage']).length);
 				$('#display-stats-vehicles-favorite').text(stats['vehicles-favorite']);
-				$('#display-stats-platform-template').toggleClass('.display-stats-platform');
-				// $('.display-stats-jit').remove();
-				$('#display-stats-platform-template').toggleClass('.display-stats-platform');
+				$('#display-stats-platform-template').toggleClass('display-stats-platform');
+				$('.display-stats-platform').remove();
+				$('#display-stats-platform-template').toggleClass('display-stats-platform');
 				$.each(stats['platforms-days-since-used'], function(id,data){
 					var nextChart = $('#display-stats-platform-template').clone();
 					nextChart.find('.display-stats-platform-label').text(app.restricted.plateToPlatform[id])
@@ -389,6 +389,7 @@ app = {
 					app.views.displayTrip.showEntry(id);
 					app.session.displayedData[id] = true;
 				}
+				app.session.stats.needRefresh = true; //
 				this.calcStats();
 				this.showStats();
 			},
@@ -401,6 +402,7 @@ app = {
 					displayTrip.nukeEntry();
 					app.views.displayTrip.showNext();
 				}
+				app.session.stats.needRefresh = true; //
 				this.calcStats();
 				this.showStats();
 			}
@@ -411,7 +413,8 @@ app = {
 			'34': '34/??',
 			'35': '35/JEEP',
 			'46': '46/LR',
-			'59': '59/MB290'
+			'59': '59/MB290',
+			'32': '32/??'
 		}
 	}
 }
