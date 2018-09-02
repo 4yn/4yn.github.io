@@ -358,6 +358,7 @@ app = {
 				if(result){
 					trips.nuke();
 					displayTrip.nukeEntry();
+					app.views.displayTrip.showNext();
 				}
 				this.calcStats();
 				this.showStats();
