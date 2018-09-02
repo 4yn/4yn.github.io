@@ -31,18 +31,13 @@ app = {
 				this.DB.getItem(id).then(function(val){cb(val)});
 			},
 			update: function(id, data){
-				data['date-day'] = data['date-day'].padZero(2);
-				data['date-month'] = data['date-month'].padZero(2);
-				data['date-year'] = data['date-year'].padZero(2);
-				data['date-hour'] = data['date-hour'].padZero(2);
-				data['date-minute'] = data['date-minute'].padZero(2);
 				data['plate'] = data['plate'].padZero(5);
 				data['odo-start'] = data['odo-start'].padZero(5);
 				data['odo-end'] = data['odo-end'].padZero(5);
 				data['mileage'] = Math.max(Number(data['odo-end']) - Number(data['odo-start']),0) + 'km';
 				data['ts-edit'] = new Date();
-				data['date-stamp'] = data['date-day'] + data['date-month'] + data['date-year'] + ' ' + data['date-hour'] + data['date-minute'] + 'hrs';
-				data['date-sort'] = data['date-year'] + data['date-month'] + data['date-day'] + data['date-hour'] + data['date-minute'] + data['odo-start'];
+				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhss'];
+				data['date-sort'] = Number(moment(data['date-stamp'],'DDMMYY <HH:></HH:>mm').format('X')) * 1000000 + Number(data['odo-start']);
 				data['odo'] = data['odo-start'] + ' - ' + data['odo-end'];
 				this.data[id] = app.utils.deepCopy(data);
 				this.DB.setItem(id,data);
@@ -86,6 +81,16 @@ app = {
 			$('.tabs').tabs();
 			$('.fixed-action-btn').floatingActionButton();
 			$('.modal').modal();
+			$('.datepicker').datepicker({
+				format: 'ddmmyy',
+				yearRange: 2,
+				showDaysInNextAndPreviousMonths: true,
+				autoClose: true,
+				firstDay: 1
+			});
+			$('.timepicker').timepicker({
+				twelveHour: false
+			});
 			this.editTrip.init();
 			this.displayTrip.init();
 			this.displayStats.init();
@@ -125,19 +130,17 @@ app = {
 					this.showNext();
 				}
 			},
-			showEntry: function(id,scrollto=false){
+			showEntry: function(id,scrollTo=false){
 				var newEntry = $('#display-trip-template').clone();
 				var entryData = app.stores.trips.data[id];
 				var fieldsDisplay = this.fieldsDisplay;
 				newEntry.attr('id','display-trip-' + id);
 				newEntry.find('.display-trip-modify').click(function(){app.views.editTrip.startEdit(id);}); //
-				newEntry.show().fadeOut(0).fadeIn(500);
 				$('#display-trip-wrapper').prepend(newEntry); //
-				this.updateEntry(id);
+				this.updateEntry(id,scrollTo,true);
 				// scroll
-				if(scrollto){$(window).scrollTop(entry.offset().top-150)}
 			},
-			updateEntry: function(id){
+			updateEntry: function(id,scrollTo=false,newEntry=false){
 				var entryData = app.stores.trips.data[id];
 				var fieldsDisplay = this.fieldsDisplay;
 				var entry = $('#display-trip-' + id);
@@ -161,6 +164,15 @@ app = {
 						break;
 					}
 				}
+				if(scrollTo){
+					$(window).scrollTop(entry.offset().top-150);
+					console.log('scroll');
+				};
+				if(newEntry){
+					entry.show().fadeOut(0).fadeIn(500);
+				} else {
+					entry.fadeOut(250).fadeIn(250).fadeOut(250).fadeIn(250);;
+				}
 			},
 			deleteEntry: function(id){
 				var entry = $('#display-trip-' + id);
@@ -180,23 +192,16 @@ app = {
 			}
 		},
 		editTrip: {
-			fieldsInput: ['date-day','date-month','date-year','date-hour','date-minute',
-						  'plate','odo-start','odo-end'],
+			fieldsInput: ['date-ddmmyy','date-hhss','plate','odo-start','odo-end'],
 			fieldsMileage: 'mileage',
 			numberOnly: function(){
 				var fieldsInput = this.fieldsInput;
 				var fieldsMileage = this.fieldsMileage;
 				$('.edit-trip-number-only').on('input',function(e){
 					$(this).val($(this).val().replace(/\D/g,''));
-					var idx = fieldsInput.findIndex(x => 'edit-trip-'+x === $(this).attr('id'));
-					if(	idx < fieldsInput.length - 1 
-						&& $(this).val().length == $(this).attr('maxlength')
-						&& $('#edit-trip-'+fieldsInput[idx+1]).val().length == 0){
-						$('#edit-trip-'+fieldsInput[idx+1]).focus();
-					}
 					$('#edit-trip-'+fieldsMileage).val(Math.max(
-						Number($('#edit-trip-'+fieldsInput[7]).val()) 
-							   - Number($('#edit-trip-'+fieldsInput[6]).val()),0
+						Number($('#edit-trip-'+fieldsInput[4]).val()) 
+							   - Number($('#edit-trip-'+fieldsInput[3]).val()),0
 					) + 'km');
 				});
 			},
@@ -250,7 +255,7 @@ app = {
 					app.session.displayedData[id] = true; //
 				} else {
 					app.stores.trips.update(session.editTripNow,data); //
-					app.views.displayTrip.updateEntry(session.editTripNow); //
+					app.views.displayTrip.updateEntry(session.editTripNow, true); //
 				}
 			},
 			init: function(){
@@ -300,7 +305,12 @@ app = {
 			},
 			importData: function(notime=false){
 				var trips = app.stores.trips //
-				var result = prompt("[DDMMYY] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
+				var result = ""
+				if(notime){
+					result = prompt("[DDMMYY] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
+				} else {
+					result =  prompt("[DDMMYYHHMM] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
+				}
 				if(result==null) return;
 				var nums = result.replace(/\D/g,' ').replace(/  +/g, ' ').split(" ");
 				console.log(nums)
@@ -308,15 +318,11 @@ app = {
 					var raw = [nums[i],nums[i+1],nums[i+2],nums[i+3],nums[i+4]];
 					var data = {}
 					app.session.editTripNow = -1;
-					data['date-day'] = raw[0].substring(0,2).padZero(2);
-					data['date-month'] = raw[0].substring(2,4).padZero(2);
-					data['date-year'] = raw[0].substring(4,6).padZero(2);
+					data['date-ddmmyy'] = raw[0].substring(0,6);
 					if(notime){
-						data['date-hour'] = "00";
-						data['date-minute'] = "00";
+						data['date-hhss'] = "00:00";
 					} else {
-						data['date-hour'] = raw[0].substring(6,8).padZero(2);
-						data['date-minute'] = raw[0].substring(8,10).padZero(2);
+						data['date-hhss'] = raw[0].substring(6,8) + ':' +  raw[0].substring(8,10);
 					}
 					data['plate'] = raw[1].padZero(5);
 					data['odo-start'] = raw[2].padZero(5);
@@ -325,6 +331,8 @@ app = {
 					app.views.displayTrip.showEntry(id);
 					app.session.displayedData[id] = true;
 				}
+				this.calcStats();
+				this.showStats();
 			},
 			clearData: function(){
 				var trips = app.stores.trips //
@@ -334,6 +342,8 @@ app = {
 					trips.nuke();
 					displayTrip.nukeEntry();
 				}
+				this.calcStats();
+				this.showStats();
 			}
 		}
 	}
