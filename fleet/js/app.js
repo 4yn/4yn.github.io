@@ -249,7 +249,6 @@ app = {
 					}
 					$('#edit-trip-'+fieldsMileage).val('0');
 					$('#edit-trip-delete').hide();
-					setTimeout(function(){$('#edit-trip-'+fieldsInput[0]).trigger('focus')},0);
 				}
 				this.validate();
 				M.updateTextFields();
