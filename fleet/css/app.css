@@ -1,3 +1,9 @@
 .modal.bottom-sheet{
 	max-height: 80%;
 }
+
+#logo{
+	background: url(../img/brand-logo.png) no-repeat center center;
+    height: 50px;
+    width: 150px;
+}

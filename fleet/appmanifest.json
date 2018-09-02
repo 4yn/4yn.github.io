@@ -1,7 +1,7 @@
 {
   "lang": "en-US",
-  "name": "fleet",
-  "short_name": "fleet",
+  "name": "Fleet",
+  "short_name": "Fleet",
   "icons": [{
     "src": "img/ios_icon.png",
     "sizes": "120x120",
@@ -15,8 +15,8 @@
     "sizes": "512x512",
     "type": "image/png"  
   }],
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "portrait",
-  "background_color": "blue",
+  "background_color": "#1E88E5",
   "theme_color": "#1E88E5"
 }

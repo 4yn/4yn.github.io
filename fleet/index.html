@@ -3,6 +3,13 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-title" content="fleet">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/img/apple-launch-1125x2436.png">
+		<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/img/apple-launch-750x1334.png">
+		<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)" href="/img/apple-launch-1242x2208.png">
+		<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" href="/img/apple-launch-640x1136.png">
+		<link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" href="/img/apple-launch-1536x2048.png">
+		<link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" href="/img/apple-launch-1668x2224.png">
+		<link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/img/apple-launch-2048x2732.png">
 		<meta name="mobile-web-app-capable" content="yes">
 		<link rel="apple-touch-icon" href="img/ios_icon.png" />
 		<link rel="icon" sizes="192x192" href="img/icon.png" />
@@ -11,16 +18,15 @@
 		<link type="text/css" rel="stylesheet" href="css/materialize.min.css"/>
 		<link type="text/css" rel="stylesheet" href="css/app.css"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>Fleet</title>
 	</head>
 	<body>
 		<div class="navbar-fixed">
-			<nav class="nav-wrapper blue darken-1 white-text">
-				<div class="container">
-					<a href="#" class="brand-logo left">&nbspfleet</a>
-					<ul class="right">
-						<li><i class="material-icons">directions_car</i></li>
-						<li><i class="material-icons">airport_shuttle</i></li>
-					</ul>
+			<nav class="nav-wrapper blue darken-1 white-text valign-wrapper">
+				<div class="container valign-wrapper">
+					<a href="#" class="brand-logo">
+						<span><div id="logo"></div></span>
+					</a>
 				</div>
 			</nav>
 		</div>
@@ -39,7 +45,7 @@
 		<div id="tab-trips">
 			<div class="container">
 				<div class="row" id="display-trip-wrapper">
-					<div class="col s12 m6 display-trip-entry" id="display-trip-template" style="display: none;"><div class="card">
+					<div class="col s12 l6 display-trip-entry" id="display-trip-template" style="display: none;"><div class="card">
 						<div class="display-trip-date-sort" style="display: none;">0</div>
 						<div class="card-content">
 							<div class="row">
