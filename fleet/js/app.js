@@ -35,9 +35,14 @@ app = {
 				data['odo-start'] = data['odo-start'].padZero(5);
 				data['odo-end'] = data['odo-end'].padZero(5);
 				data['mileage'] = Math.max(Number(data['odo-end']) - Number(data['odo-start']),0) + 'km';
+				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || '???';
 				data['ts-edit'] = new Date();
 				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhss'];
-				data['date-sort'] = Number(moment(data['date-stamp'],'DDMMYY <HH:></HH:>mm').format('X')) * 1000000 + Number(data['odo-start']);
+				var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm')
+				data['date-sort'] = Number(thisMoment.format('X')) * 1000000 + Number(data['odo-start']);
+				data['date-top'] = thisMoment.format('HH:mm ddd')
+				data['date-center'] = thisMoment.format('DD')
+				data['date-bottom'] = thisMoment.format('MMM YY')
 				data['odo'] = data['odo-start'] + ' - ' + data['odo-end'];
 				this.data[id] = app.utils.deepCopy(data);
 				this.DB.setItem(id,data);
@@ -94,9 +99,17 @@ app = {
 			this.editTrip.init();
 			this.displayTrip.init();
 			this.displayStats.init();
+			this.preload.donePreload();
+		},
+		preload: {
+			donePreload: function(){
+				$('.preload-window').fadeOut(1000, function(){
+					this.remove();
+				});
+			}
 		},
 		displayTrip: {
-			fieldsDisplay: ['plate','mileage','date-stamp','date-sort','odo'],
+			fieldsDisplay: ['plate','mileage','date-top','date-center','date-bottom','date-sort','odo-start','odo-end','platform'],
 			showNext: function(){
 				if(this.doneDisplaying) return;
 				var trips = app.stores.trips;
@@ -115,12 +128,15 @@ app = {
 				} else {
 					doneDisplaying = true;
 					$('#display-trip-loading').hide();
+					$('#display-trip-last').show();
 				}
 			},
 			checkPage: function(){
 				var now = new Date();
-				if(window.innerHeight + window.scrollY > document.body.offsetHeight
-					&& now - app.session.lastDisplayed >= 1000){
+				// if(window.innerHeight + window.scrollY > document.body.offsetHeight
+				elem = $('#tab-trips')[0]
+				if(elem.scrollHeight - elem.scrollTop === elem.clientHeight
+					&& now - app.session.lastDisplayed >= 500){
 					app.session.lastDisplayed = now;
 					app.views.displayTrip.showPage();
 				}
@@ -146,6 +162,7 @@ app = {
 				var entry = $('#display-trip-' + id);
 				for(var i=0;i<fieldsDisplay.length;i++){
 					entry.find('.display-trip-'+fieldsDisplay[i]).text(entryData[fieldsDisplay[i]]);
+					entry.find('.display-trip-'+fieldsDisplay[i]).attr('data-val',entryData[fieldsDisplay[i]])
 				}
 				// maintain sort
 				while(1){
@@ -188,7 +205,7 @@ app = {
 			},
 			init: function(){
 				var displayTrip = this;
-				$(window).scroll(function(){displayTrip.checkPage()});
+				$('#tab-trips').scroll(function(){displayTrip.checkPage()});
 			}
 		},
 		editTrip: {
@@ -298,7 +315,7 @@ app = {
 			},
 			showStats: function(){
 				var stats = app.session.stats; //
-				$('#display-stats-mileage').text(stats['total']);
+				$('#display-stats-mileage').text(stats['total'] + 'km');
 				$('#display-stats-vehicles').text(Object.keys(stats['vehicles']).length);
 				$('#display-stats-platforms').text(Object.keys(stats['platforms']).length);
 				$('#display-stats-vehicles-favorite').text(stats['vehicles-favorite']);
@@ -345,6 +362,14 @@ app = {
 				this.calcStats();
 				this.showStats();
 			}
+		}
+	},
+	restricted: {
+		plateToPlatform: {
+			'35': 'JEEP',
+			'59': 'MB290',
+			'46': 'LR',
+			'34': '??'
 		}
 	}
 }

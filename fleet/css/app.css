@@ -4,6 +4,114 @@
 
 #logo{
 	background: url(../img/brand-logo.png) no-repeat center center;
+	background-size: 125px 50px;
     height: 50px;
     width: 150px;
+}
+
+#tab-trips{
+	overflow-y: scroll;
+    height: calc(100% - 128px);
+    width: auto;
+}
+
+#tab-stats{
+	overflow-y: scroll;
+    height: calc(100% - 128px);
+    width: auto;
+}
+
+.preload-window{
+	z-index: 9999;
+	position: fixed;
+	top: 0px; bottom: 0px;
+	left: 0px; right: 0px;
+}
+
+#display-trip-loading{
+	height: 80px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.container{
+	max-width: 1200px;
+}
+
+.tab-trips-container{
+	max-width: 1200px;
+	margin: 0px auto;
+}
+
+.card-content.less-padding{
+	padding: 16px;
+}
+
+.display-trip-container{
+	line-height: 1.2;
+}
+
+.display-trip-flex-row{
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+.display-trip-flex-row.display-trip-container {
+	justify-content: space-around;
+}
+
+.display-trip-flex-column{
+	display: flex;
+	flex-flow: column nowrap;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+.display-trip-datebox{
+	flex: 0 0 25%;
+}
+
+.display-trip-vehiclebox{
+	flex: 0 0 30%;
+}
+
+.display-trip-miscbox{
+	flex: 0 0 10%;
+}
+
+.display-trip-date-top{
+	font-size: 13px;
+}
+
+.display-trip-date-center{
+	margin-top: -7px;
+	font-size: 45px;
+}
+
+.display-trip-date-bottom{
+	font-size: 14px;
+}
+
+.display-trip-plate{
+	font-size: 35px;
+}
+
+.display-trip-mileage{
+	font-size: 35px;
+}
+
+.display-trip-platform{
+	font-weight: bold;
+	font-size: 20px;
+}
+
+.display-trip-odo-start{
+	font-size: 20px;	
+}
+
+.display-trip-odo-end{
+	font-size: 20px;
 }

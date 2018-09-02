@@ -43,12 +43,12 @@
 			</nav>
 		</div>
 		<div id="tab-trips">
-			<div class="container">
+			<div class="tab-trips-container">
 				<div class="row" id="display-trip-wrapper">
-					<div class="col s12 l6 display-trip-entry" id="display-trip-template" style="display: none;"><div class="card">
+					<div class="col s12 m6 l4 display-trip-entry" id="display-trip-template" style="display: none;"><div class="card"> 
 						<div class="display-trip-date-sort" style="display: none;">0</div>
-						<div class="card-content">
-							<div class="row">
+						<div class="card-content less-padding display-trip-container display-trip-flex-row">
+							<!-- <div class="row">
 								<div class="col s6 right-align">
 									<span class="card-title display-trip-plate">12345ABC</span>
 								</div>
@@ -61,11 +61,46 @@
 								<div class="col s6 left-align display-trip-odo">
 									12345 - 67890
 								</div>
+							</div> -->
+							<div class="display-trip-datebox display-trip-flex-column">
+								<div class="display-trip-date-top center">
+									11:59 MON
+								</div>
+								<div class="display-trip-date-center center">
+									29
+								</div>
+								<div class="display-trip-date-bottom center">
+									AUG 2019
+								</div>
+							</div>
+							<div class="display-trip-vehiclebox display-trip-flex-column right-align">
+								<div class="display-trip-plate">
+									12345MID
+								</div>
+								<div class="display-trip-mileage">
+									20km
+								</div>
+								
+							</div>
+							<div class="display-trip-miscbox display-trip-flex-column">
+								<div class="display-trip-platform">
+									JEEP
+								</div>
+								<div class="display-trip-odo-start">
+									100
+								</div>
+								<div class="display-trip-odo-end">
+									200
+								</div>
+								<div class="display-trip-miscbox-pad">
+									<!-- &nbsp -->
+								</div>
+							</div>
 							</div>
 							<a href="#edit-trip-modal" class="btn-floating halfway-fab teal darken-1 modal-trigger display-trip-modify"><i class="material-icons">create</i></a>
 						</div>
 					</div></div>
-					<div class="col s12 center" id="display-trip-loading"><div class="preloader-wrapper big active">
+					<div class="col s12 valign-wrapper" id="display-trip-loading"><div class="preloader-wrapper big active">
 						<div class="spinner-layer spinner-blue-only">
 							<div class="circle-clipper left">
 								<div class="circle"></div>
@@ -78,6 +113,13 @@
 							</div>
 						</div>
 					</div></div>
+					<div class="col s12" id="display-trip-last" style="display: none;">
+						<div class="card">
+							<div class="card-content">
+								<span class="card-title">No more trips!</span>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="fixed-action-btn">
@@ -114,7 +156,7 @@
 					<div class="col s12"><div class="card black white-text">
 						<div class="card-content">
 							<span class="card-title">Advanced Options</span>
-							<a href="#" class="btn-large green" id="stats-import-notime"><i class="material-icons left">input</i>Import (Without Times)</a>
+							<a href="#" class="btn-large green" id="stats-import-notime"><i class="material-icons left">input</i>Import (w/o Time)</a>
 							<a href="#" class="btn-large green darken-2" id="stats-import"><i class="material-icons left">input</i>Import</a>
 							<a href="#" class="btn-large red" id="stats-nuke"><i class="material-icons left">delete_sweep</i>Delete All</a>
 							<a href="#" class="btn-large blue disabled" id="stats-export-text"><i class="material-icons left">content_paste</i>Export (Clipboard)</a>
@@ -127,26 +169,6 @@
 		<div class="modal bottom-sheet modal-fixed-footer" id="edit-trip-modal">
 			<div class="modal-content">
 				<div class="row">
-					<!-- <div class="input-field col s4 m2">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-date-day" maxlength="2"/>
-						<label for="edit-date-day">Day</label>
-					</div>
-					<div class="input-field col s4 m2">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-date-month" maxlength="2" />
-						<label for="edit-date-month">Month</label>
-					</div>
-					<div class="input-field col s4 m2">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-date-year" maxlength="2" />
-						<label for="edit-date-year">Year</label>
-					</div>
-					<div class="input-field col s6 m3">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-date-hour" maxlength="2" />
-						<label for="edit-date-hour">Hour</label>
-					</div>
-					<div class="input-field col s6 m3">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-date-minute" maxlength="2" />
-						<label for="edit-date-minute">Minute</label>
-					</div> -->
 					<div class="input-field col s12 m6">
 						<input type="text" class="datepicker" id="edit-trip-date-ddmmyy" />
 						<label for="edit-date-hour">Date</label>
@@ -177,6 +199,13 @@
 				<a href="javascript:;" class="modal-close btn-flat red darken-3 white-text left-align" id="edit-trip-delete"><i class="material-icons">delete</i></a>
 				<a href="javascript:;" class="modal-close btn-flat red white-text"><i class="material-icons left">cancel</i>Cancel</a>
 				<a href="javascript:;" class="modal-close btn-flat light-green white-text disabled" id="edit-trip-done"><i class="material-icons right">done</i>Save</a>
+			</div>
+		</div>
+		<div class="preload-window blue darken-1 valign-wrapper center-align">
+			<div class="container">
+				<div class="progress">
+					<div class="indeterminate"></div>
+				</div>
 			</div>
 		</div>
 		<script type="text/javascript" src="js/jquery.min.js"></script>
