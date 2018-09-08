@@ -147,8 +147,7 @@
 					<div class="col s12"><div class="card black white-text">
 						<div class="card-content">
 							<span class="card-title">Options</span>
-							<a href="#" class="btn-large green" id="stats-import-notime"><i class="material-icons left">input</i>Import (w/o Time)</a>
-							<a href="#" class="btn-large green darken-2" id="stats-import"><i class="material-icons left">input</i>Import</a>
+							<a href="#stats-import-modal" class="btn-large green darken-2 modal-trigger" id="stats-import-start"><i class="material-icons left">input</i>Import Text</a>
 							<a href="#" class="btn-large red" id="stats-nuke"><i class="material-icons left">delete_sweep</i>Delete All</a>
 							<a href="#" class="btn-large blue disabled" id="stats-export-text"><i class="material-icons left">content_paste</i>Export (Clipboard)</a>
 							<a href="#" class="btn-large teal disabled" id="stats-export-excel"><i class="material-icons left">assessment</i>Export (CSV/Excel)</a>
@@ -190,6 +189,48 @@
 				<a href="javascript:;" class="modal-close btn-flat red darken-3 white-text left-align" id="edit-trip-delete"><i class="material-icons">delete</i></a>
 				<a href="javascript:;" class="modal-close btn-flat red white-text"><i class="material-icons left">cancel</i>Cancel</a>
 				<a href="javascript:;" class="modal-close btn-flat light-green white-text disabled" id="edit-trip-done"><i class="material-icons right">done</i>Save</a>
+			</div>
+		</div>
+		<div class="modal bottom-sheet modal-fixed-footer" id="stats-import-modal">
+			<div class="modal-content">
+				<div class="row">
+					<div class="col s12">
+						Please provide the format of your data:
+					</div>
+					<div class="col s12 m4">
+						Required fields: <br>
+						"d" = Day (01,02...31) <br>
+						"m" = Month (01,02...12) <br>
+						"y" = Year (18,19...)
+					</div>
+					<div class="col s12 m4">
+						"V" = License plate <br>
+						"S" = Starting odometer <br>
+						"E" = Ending odometer
+					</div>
+					<div class="col s12 m4">
+						Optional: <br>
+						"H" = Hour in 24hrs format (00,01...23) <br>
+						"M" = Minute (00,01...59) <br>
+						"D" = Distance travelled
+					</div>
+					<div class="input-field col s12">
+						<input type="text" id="stats-import-format" value="dmy V S-E"/>
+						<label for="stats-import-format">Format</label>
+					</div>
+					<div class="input-field col s2 m1">
+						<textarea disabled placeholder="" id="stats-import-check" class="materialize-textarea"></textarea>
+						<label for="stats-import-check">Check</label>
+					</div>
+					<div class="input-field col s10 m11">
+						<textarea id="stats-import-input" class="materialize-textarea"></textarea>
+						<label for="stats-import-input">Data</label>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a href="javascript:;" class="modal-close btn-flat red white-text"><i class="material-icons left">cancel</i>Cancel</a>
+				<a href="javascript:;" class="modal-close btn-flat light-green white-text" id="stats-import-done"><i class="material-icons left">input</i>Done</a>
 			</div>
 		</div>
 		<div class="preload-window blue darken-1 valign-wrapper center-align">

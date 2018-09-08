@@ -60,7 +60,7 @@ app = {
 				this.DB.clear();
 			},
 			import: function(value,key,idx){
-				var trips = app.stores.trips; //fk
+				var trips = app.stores.trips; //rip
 				trips.data[key] = value;
 				app.stores.trips.populate(key); // gdi
 				// app.views.displayTrip.showEntry(key);
@@ -296,9 +296,11 @@ app = {
 			init: function(){
 				var displayStats = this;
 				$('#tab-stats-btn').click(function(){displayStats.calcStats();displayStats.showStats()});
-				$('#stats-import').click(function(){displayStats.importData()});
-				$('#stats-import-notime').click(function(){displayStats.importData(true)});
 				$('#stats-nuke').click(function(){displayStats.clearData()});
+				$('#stats-import-start').click(function(){displayStats.startImport()});
+				$('#stats-import-format').change(function(){displayStats.checkFormat();displayStats.checkImport()});
+				$('#stats-import-input').change(function(){displayStats.checkFormat();displayStats.checkImport()});
+				$('#stats-import-done').click(function(){displayStats.endImport();});
 			},
 			calcStats: function(){
 
@@ -358,48 +360,6 @@ app = {
 					nextChart.show();
 				});
 			},
-			importData: function(notime=false){
-				var trips = app.stores.trips //
-				var result = ""
-				if(notime){
-					result = prompt("Please paste all your mileage data below.\n[DDMMYY] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
-				} else {
-					result =  prompt("Please paste all your mileage data below.\n[DDMMYYHHMM] [License Plate] [Odometer Start]-[Odometer End] [Mileage]");
-				}
-				if(result==null) return;
-				var nums = result.replace(/\D/g,' ').replace(/  +/g, ' ').split(" ");
-				var toImport = [];
-				try{
-					for(var i=0;i+4<nums.length;i+=5){
-						var raw = [nums[i],nums[i+1],nums[i+2],nums[i+3],nums[i+4]];
-						var data = {}
-						app.session.editTripNow = -1;
-						data['date-ddmmyy'] = raw[0].substring(0,6);
-						if(notime){
-							data['date-hhss'] = "00:00";
-						} else {
-							data['date-hhss'] = raw[0].substring(6,8) + ':' +  raw[0].substring(8,10);
-						}
-						data['plate'] = raw[1].padZero(5);
-						data['odo-start'] = raw[2].padZero(5);
-						data['odo-end'] = raw[3].padZero(5);
-						toImport.push(data);
-					}
-				} catch(err) {
-					console.log(err);
-					alert("Error occurred, data not imported.")
-					return;
-				}
-				for(var i=0;i<toImport.length;i++){
-					var data = toImport[i];
-					var id = trips.create(data);
-					app.views.displayTrip.showEntry(id);
-					app.session.displayedData[id] = true;
-				}
-				app.session.stats.needRefresh = true; //
-				this.calcStats();
-				this.showStats();
-			},
 			clearData: function(){
 				var trips = app.stores.trips //
 				var displayTrip = app.views.displayTrip//
@@ -409,6 +369,150 @@ app = {
 					displayTrip.nukeEntry();
 					app.views.displayTrip.showNext();
 				}
+				app.session.stats.needRefresh = true; //
+				this.calcStats();
+				this.showStats();
+			},
+			startImport: function(){
+				$('#stats-import-check').val("");
+				$('#stats-import-input').val("");
+				$('#stats-import-done').addClass('disabled');
+				M.updateTextFields();
+			},
+			importFormat: {
+				'd': { 'required': true, 'length': 2 },
+				'm': { 'required': true, 'length': 2 },
+				'y': { 'required': true, 'length': 2 },
+				'V': { 'required': true, 'length': undefined },
+				'S': { 'required': true, 'length': undefined },
+				'E': { 'required': true, 'length': undefined },
+				'H': { 'required': false, 'length': 2 },
+				'M': { 'required': false, 'length': 2 },
+				'D': { 'required': false, 'length': undefined }
+			},
+			checkFormat: function(){
+				var displayStats = app.views.displayStats; // rip
+				var format = $("#stats-import-format").val();
+				var check = ""
+				var ok = true;
+				$.each(displayStats.importFormat, function(id,data){
+					if(format.indexOf(id)==-1 && data['required']){
+						ok = false;
+					}
+				});
+				if(ok){
+					$('#stats-import-input').prop('disabled',false);
+					$('#stats-import-done').removeClass('disabled');
+				} else {
+					$('#stats-import-input').prop('disabled',true);
+					$('#stats-import-done').addClass('disabled');
+				}
+			},
+			parseImport: function(source,pattern){
+				if(source.length < pattern.length){
+					throw "Too few numbers";
+				} else if (source.length > pattern.length){
+					throw "Too many numbers";
+				}
+				var displayStats = app.views.displayStats;
+				var readData = [];
+				readData['H'] = "00";
+				readData['M'] = "00";
+				$.each(pattern,function(id,subpattern){
+					var field = source[id];
+					$.each(subpattern.split(''), function(sid,fieldType){
+						var reqLength = displayStats.importFormat[fieldType]['length'];
+						if(reqLength){
+							if(field.length < reqLength) {
+								throw "[" + fieldType + "] too short"
+							}
+							readData[fieldType] = field.substring(0,reqLength);
+							field = field.substring(2);
+						} else {
+							if(field == ""){
+								throw "[" + fieldType + "] missing";
+							}
+							readData[fieldType] = field;
+							field =  "";
+						}
+					});
+					if(field.length !=0){
+						throw "[" + subpattern + "] excess";
+					}
+				});
+				var data = {
+					'date-ddmmyy': readData['d'] + readData['m'] + readData['y'] ,
+					'date-hhmm': readData['H'] + readData['M'],
+					'plate': readData['V'],
+					'odo-start': readData['S'],
+					'odo-end': readData['E']
+				}
+				try{
+					var thisMoment = moment(data['date-ddmmyy'] + ' ' + data['date-hhmm'],'DDMMYY HH:mm');
+					if(!thisMoment.isValid()){
+						console.log(thisMoment);
+						throw 'Invalid date';
+					}
+				} catch {
+					throw 'Invalid date';
+				}
+				return data;
+			},
+			checkImport: function(){
+				var source = $('#stats-import-input').val().split("\n");
+				var pattern = $('#stats-import-format').val();
+				pattern = pattern.replace(/[^dmyVSEHMD]/g,' ').replace(/  +/g, ' ').split(" ").filter(function(e){
+					return e
+				});
+				var check = '';
+				var ok = true;
+				$.each(source,function(id,text){
+					text = text.replace(/\D/g,' ').replace(/  +/g, ' ').split(" ").filter(function(e){
+						return e
+					});
+					if(text.length == 0){
+						check += '\n';
+						return;
+					}
+					source[id] = text;
+					try{
+						app.views.displayStats.parseImport(text,pattern) // rip
+						check += 'OK';
+					} catch(err){
+						check += err;
+						ok = false;
+					} finally {
+						check += '\n';
+					}
+				});
+				check = check.slice(0,-1);
+				$('#stats-import-check').val(check);
+				if(ok){
+					$('#stats-import-done').removeClass('disabled');
+				} else {
+					$('#stats-import-done').addClass('disabled');
+				}
+				M.updateTextFields();
+				M.textareaAutoResize($('#stats-import-check'));
+			},
+			endImport: function(){
+				var source = $('#stats-import-input').val().split("\n");
+				var pattern = $('#stats-import-format').val();
+				pattern = pattern.replace(/[^dmyVSEHMD]/g,' ').replace(/  +/g, ' ').split(" ").filter(function(e){
+					return e
+				});
+				$.each(source,function(id,text){
+					text = text.replace(/\D/g,' ').replace(/  +/g, ' ').split(" ").filter(function(e){
+						return e
+					});
+					if(text.length == 0){
+						return;
+					}
+					var data = app.views.displayStats.parseImport(text,pattern) // rip
+					var nid = app.stores.trips.create(data);
+					app.views.displayTrip.showEntry(nid); //
+					app.session.displayedData[nid] = true; //
+				});
 				app.session.stats.needRefresh = true; //
 				this.calcStats();
 				this.showStats();
@@ -422,7 +526,7 @@ app = {
 			'46': '46/MB',
 			'41': '41/GP',
 			'59': '59/MB290',
-			'32': '32LR'
+			'32': '32/LR'
 		}
 	}
 }

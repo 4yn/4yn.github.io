@@ -125,3 +125,10 @@
 .display-stats-platform-label{
 	font-weight: bold !important;
 }
+
+#stats-import-input{
+	white-space: pre;
+}
+#stats-import-check{
+	white-space: pre;
+}
