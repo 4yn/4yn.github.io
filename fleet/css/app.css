@@ -2,6 +2,12 @@
 	max-height: 80%;
 }
 
+.logo-wrapper{
+	flex: row nowrap;
+	justify-content: center;
+	align-items: center;
+}
+
 #logo{
 	background: url(../img/brand-logo.png) no-repeat center center;
 	background-size: 125px 50px;

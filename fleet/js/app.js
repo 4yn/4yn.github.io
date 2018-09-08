@@ -35,8 +35,14 @@ app = {
 				data['odo-start'] = data['odo-start'].padZero(5);
 				data['odo-end'] = data['odo-end'].padZero(5);
 				data['mileage'] = Math.max(Number(data['odo-end']) - Number(data['odo-start']),0) + 'km';
-				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || '???';
 				data['ts-edit'] = new Date();
+				this.data[id] = app.utils.deepCopy(data);
+				this.DB.setItem(id,data);
+				this.populate(id);
+			},
+			populate(id){
+				var data = this.data[id]
+				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || '???';
 				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhss'];
 				var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm')
 				data['date-sort'] = Number(thisMoment.format('X')) * 1000000 + Number(data['odo-start']);
@@ -44,8 +50,6 @@ app = {
 				data['date-center'] = thisMoment.format('DD')
 				data['date-bottom'] = thisMoment.format('MMM YY')
 				data['odo'] = data['odo-start'] + ' - ' + data['odo-end'];
-				this.data[id] = app.utils.deepCopy(data);
-				this.DB.setItem(id,data);
 			},
 			delete: function(id){
 				delete this.data[id];
@@ -58,6 +62,7 @@ app = {
 			import: function(value,key,idx){
 				var trips = app.stores.trips; //fk
 				trips.data[key] = value;
+				app.stores.trips.populate(key); // gdi
 				// app.views.displayTrip.showEntry(key);
 				trips.nextId = Math.max(trips.nextId,Number(key)+1);
 			}
@@ -93,10 +98,12 @@ app = {
 				yearRange: 2,
 				showDaysInNextAndPreviousMonths: true,
 				autoClose: true,
-				firstDay: 1
+				firstDay: 1,
+				container: 'body'
 			});
 			$('.timepicker').timepicker({
-				twelveHour: false
+				twelveHour: false,
+				container: 'body'
 			});
 			this.editTrip.init();
 			this.displayTrip.init();
@@ -164,7 +171,7 @@ app = {
 				var entry = $('#display-trip-' + id);
 				for(var i=0;i<fieldsDisplay.length;i++){
 					entry.find('.display-trip-'+fieldsDisplay[i]).text(entryData[fieldsDisplay[i]]);
-					entry.find('.display-trip-'+fieldsDisplay[i]).attr('data-val',entryData[fieldsDisplay[i]])
+					//entry.find('.display-trip-'+fieldsDisplay[i]).attr('data-val',entryData[fieldsDisplay[i]])
 				}
 				// maintain sort
 				while(1){
@@ -313,7 +320,7 @@ app = {
 					var plate = data['plate']
 					var mileage = Math.max(Number(data['odo-end']) - Number(data['odo-start']),0);
 					var platform = plate.substring(0,2);
-					var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm');
+					var thisMoment = moment(data['date-ddmmyy'],'DDMMYY');
 					var daysSinceUsed = moment().diff(thisMoment,'days')
 					stats['vehicles-mileage'][plate] = stats['vehicles-mileage'][plate] + mileage || mileage;
 					stats['platforms-mileage'][platform] = stats['platforms-mileage'][platform] + mileage || mileage;
@@ -415,7 +422,7 @@ app = {
 			'46': '46/MB',
 			'41': '41/GP',
 			'59': '59/MB290',
-			'32': '32/LR'
+			'32': '32LR'
 		}
 	}
 }
