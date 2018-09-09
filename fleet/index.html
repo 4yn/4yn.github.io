@@ -149,7 +149,7 @@
 							<span class="card-title">Options</span>
 							<a href="#stats-import-modal" class="btn-large green darken-2 modal-trigger" id="stats-import-start"><i class="material-icons left">input</i>Import Text</a>
 							<a href="#" class="btn-large red" id="stats-nuke"><i class="material-icons left">delete_sweep</i>Delete All</a>
-							<a href="#" class="btn-large blue disabled" id="stats-export-text"><i class="material-icons left">content_paste</i>Export (Clipboard)</a>
+							<a href="#stats-export-modal" class="btn-large blue modal-trigger" id="stats-export-start"><i class="material-icons left">content_paste</i>Export Text</a>
 							<a href="#" class="btn-large teal disabled" id="stats-export-excel"><i class="material-icons left">assessment</i>Export (CSV/Excel)</a>
 						</div>
 					</div></div>
@@ -164,23 +164,23 @@
 						<label for="edit-date-hour">Date</label>
 					</div>
 					<div class="input-field col s12 m6">
-						<input type="text" class="timepicker" id="edit-trip-date-hhss" />
+						<input type="text" class="timepicker" id="edit-trip-date-hhmm" />
 						<label for="edit-date-hour">Time</label>
 					</div>
 					<div class="input-field col s12 m4">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-plate" maxlength="5" />
+						<input type="text" class="utils-number-only" id="edit-trip-plate" maxlength="5" />
 						<label for="edit-date-plate">License Plate</label>
 					</div>
 					<div class="input-field col s6 m3">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-odo-start" maxlength="5" />
+						<input type="text" class="utils-number-only edit-trip-update-mileage" id="edit-trip-odo-start" maxlength="6" />
 						<label for="edit-trip-odo-start">Odometer Start</label>
 					</div>
 					<div class="input-field col s6 m3">
-						<input type="text" class="edit-trip-number-only" id="edit-trip-odo-end" maxlength="5" />
+						<input type="text" class="utils-number-only edit-trip-update-mileage" id="edit-trip-odo-end" maxlength="6" />
 						<label for="edit-trip-odo-end">Odometer End</label>
 					</div>
 					<div class="input-field col s12 m2">
-						<input disabled type="text" class="edit-trip-number-only" id="edit-trip-mileage" />
+						<input disabled type="text" id="edit-trip-mileage" />
 						<label for="edit-trip-mileage">Mileage</label>
 					</div>
 				</div>
@@ -195,7 +195,7 @@
 			<div class="modal-content">
 				<div class="row">
 					<div class="col s12">
-						Please provide the format of your data:
+						Please provide the format of your data to be imported:
 					</div>
 					<div class="col s12 m4">
 						Required fields: <br>
@@ -212,14 +212,14 @@
 						Optional: <br>
 						"H" = Hour in 24hrs format (00,01...23) <br>
 						"M" = Minute (00,01...59) <br>
-						"D" = Distance travelled
+						"D" = Distance traveled
 					</div>
 					<div class="input-field col s12">
 						<input type="text" id="stats-import-format" value="dmy V S-E"/>
 						<label for="stats-import-format">Format</label>
 					</div>
 					<div class="input-field col s2 m1">
-						<textarea disabled placeholder="" id="stats-import-check" class="materialize-textarea"></textarea>
+						<textarea readonly placeholder="" id="stats-import-check" class="materialize-textarea"></textarea>
 						<label for="stats-import-check">Check</label>
 					</div>
 					<div class="input-field col s10 m11">
@@ -231,6 +231,55 @@
 			<div class="modal-footer">
 				<a href="javascript:;" class="modal-close btn-flat red white-text"><i class="material-icons left">cancel</i>Cancel</a>
 				<a href="javascript:;" class="modal-close btn-flat light-green white-text" id="stats-import-done"><i class="material-icons left">input</i>Done</a>
+			</div>
+		</div>
+		<div class="modal bottom-sheet modal-fixed-footer" id="stats-export-modal">
+			<div class="modal-content">
+				<div class="row">
+					<div class="col s12">
+						Please provide the format of the data to be exported:
+						<div class="row">
+							<div class="col s12 m4">
+								"!d" = Day (01,02...31) <br>
+								"!m" = Month (01,02...12) <br>
+								"!y" = Year (18,19...) <br>
+								"!H" = Hour in 24hrs format (00,01...23)  <br>
+								"!M" = Minute (00,01...59)
+							</div>
+							<div class="col s12 m4">
+								"!V" = License plate <br>
+								"!S" = Starting odometer <br>
+								"!E" = Ending odometer <br>
+								"!D" = Distance traveled <br>
+							</div>
+							<div class="col s12 m4">
+								"!P" = Platform <br>
+								"!#" = Trip # counter
+							</div>
+						</div>
+					</div>
+					<div class="input-field col s12 m8">
+						<input type="text" id="stats-export-format" value="!d!m!y !H:!M !V !S-!E (!Dkm)"/>
+						<label for="stats-export-format">Format</label>
+					</div>
+					<div class="input-field col s6 m2">
+						<input type="text" class="utils-number-only" id="stats-export-month" value=""/>
+						<label for="stats-export-month">Filter Month</label>
+					</div>
+					<div class="input-field col s6 m2">
+						<input type="text" class="utils-number-only" id="stats-export-year" value=""/>
+						<label for="stats-export-year">Filter Year</label>
+					</div>
+					<div class="input-field col s12">
+						<textarea readonly id="stats-export-print" class="materialize-textarea" placeholder=""></textarea>
+						<label for="stats-export-print">Data</label>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a href="javascript:;" class="btn-flat teal white-text" id="stats-export-generate"><i class="material-icons left">print</i>Generate</a>
+				<a href="javascript:;" class="btn-flat blue white-text" id="stats-export-copy"><i class="material-icons left">content_copy</i>Copy</a>
+				<a href="javascript:;" class="modal-close btn-flat light-green white-text" id="stats-export-done"><i class="material-icons left">done</i>Done</a>
 			</div>
 		</div>
 		<div class="preload-window blue darken-1 valign-wrapper center-align">

@@ -42,8 +42,8 @@ app = {
 			},
 			populate(id){
 				var data = this.data[id]
-				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || '???';
-				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhss'];
+				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || data['plate'].substring(0,2) + '/???';
+				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhmm'];
 				var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm')
 				data['date-sort'] = Number(thisMoment.format('X')) * 1000000 + Number(data['odo-start']);
 				data['date-top'] = thisMoment.format('HH:mm ddd')
@@ -85,7 +85,8 @@ app = {
 		doneDisplaying: false,
 		stats: {
 			needRefresh: true
-		}
+		},
+		nowPrinting: 0,
 	},
 
 	views: {
@@ -99,15 +100,23 @@ app = {
 				showDaysInNextAndPreviousMonths: true,
 				autoClose: true,
 				firstDay: 1,
-				container: 'body'
+				container: 'body',
+				onClose: function(){
+					app.views.editTrip.validate();
+				}
 			});
 			$('.timepicker').timepicker({
 				twelveHour: false,
-				container: 'body'
+				autoClose: true,
+				container: 'body',
+				onClose: function(){
+					app.views.editTrip.validate();
+				}
 			});
 			this.editTrip.init();
 			this.displayTrip.init();
 			this.displayStats.init();
+			this.utils.init();
 			this.preload.donePreload();
 		},
 		preload: {
@@ -191,7 +200,7 @@ app = {
 					}
 				}
 				if(scrollTo){
-					$(window).scrollTop(entry.offset().top-150);
+					$('#tab-trips').scrollTop(entry.offset().top-150);
 				};
 				if(newEntry){
 					entry.show().fadeOut(0).fadeIn(500);
@@ -217,13 +226,12 @@ app = {
 			}
 		},
 		editTrip: {
-			fieldsInput: ['date-ddmmyy','date-hhss','plate','odo-start','odo-end'],
+			fieldsInput: ['date-ddmmyy','date-hhmm','plate','odo-start','odo-end'],
 			fieldsMileage: 'mileage',
-			numberOnly: function(){
+			updateMileage: function(){
 				var fieldsInput = this.fieldsInput;
 				var fieldsMileage = this.fieldsMileage;
-				$('.edit-trip-number-only').on('input',function(e){
-					$(this).val($(this).val().replace(/\D/g,''));
+				$('.edit-trip-update-mileage').on('change',function(e){
 					$('#edit-trip-'+fieldsMileage).val(Math.max(
 						Number($('#edit-trip-'+fieldsInput[4]).val()) 
 							   - Number($('#edit-trip-'+fieldsInput[3]).val()),0
@@ -284,7 +292,7 @@ app = {
 				}
 			},
 			init: function(){
-				this.numberOnly();
+				this.updateMileage();
 				var editTrip = this;
 				$('#edit-trip-create').click(function(){editTrip.startEdit(-1);});
 				$('#edit-trip-delete').click(function(){editTrip.deleteEdit()});
@@ -298,9 +306,13 @@ app = {
 				$('#tab-stats-btn').click(function(){displayStats.calcStats();displayStats.showStats()});
 				$('#stats-nuke').click(function(){displayStats.clearData()});
 				$('#stats-import-start').click(function(){displayStats.startImport()});
-				$('#stats-import-format').change(function(){displayStats.checkFormat();displayStats.checkImport()});
-				$('#stats-import-input').change(function(){displayStats.checkFormat();displayStats.checkImport()});
+				$('#stats-import-format').change(function(){displayStats.checkImportFormat();displayStats.checkImport()});
+				$('#stats-import-input').change(function(){displayStats.checkImportFormat();displayStats.checkImport()});
 				$('#stats-import-done').click(function(){displayStats.endImport();});
+				$('#stats-export-start').click(function(){displayStats.startExport()});
+				$('#stats-export-format').change(function(){displayStats.checkExportFormat()});
+				$('#stats-export-generate').click(function(){displayStats.generateExport()});
+				$('#stats-export-copy').click(function(){displayStats.copyExport()});
 			},
 			calcStats: function(){
 
@@ -345,7 +357,7 @@ app = {
 				$('#display-stats-platform-template').toggleClass('display-stats-platform');
 				$.each(stats['platforms-days-since-used'], function(id,data){
 					var nextChart = $('#display-stats-platform-template').clone();
-					nextChart.find('.display-stats-platform-label').text(app.restricted.plateToPlatform[id])
+					nextChart.find('.display-stats-platform-label').text(app.restricted.plateToPlatform[id] || id + "/???")
 					nextChart.find('.display-stats-platform-mileage').text(stats['platforms-mileage'][id] + 'km')
 					var result = 'Driven ' + data + ' day' + ((data==1)?'':'s') + ' ago, ';
 					if(data < 10){
@@ -370,6 +382,7 @@ app = {
 					app.views.displayTrip.showNext();
 				}
 				app.session.stats.needRefresh = true; //
+				M.toast({html: 'All data erased!'});
 				this.calcStats();
 				this.showStats();
 			},
@@ -390,7 +403,7 @@ app = {
 				'M': { 'required': false, 'length': 2 },
 				'D': { 'required': false, 'length': undefined }
 			},
-			checkFormat: function(){
+			checkImportFormat: function(){
 				var displayStats = app.views.displayStats; // rip
 				var format = $("#stats-import-format").val();
 				var check = ""
@@ -442,7 +455,7 @@ app = {
 				});
 				var data = {
 					'date-ddmmyy': readData['d'] + readData['m'] + readData['y'] ,
-					'date-hhmm': readData['H'] + readData['M'],
+					'date-hhmm': readData['H'] + ":" + readData['M'],
 					'plate': readData['V'],
 					'odo-start': readData['S'],
 					'odo-end': readData['E']
@@ -498,6 +511,7 @@ app = {
 			endImport: function(){
 				var source = $('#stats-import-input').val().split("\n");
 				var pattern = $('#stats-import-format').val();
+				var toImport = [];
 				pattern = pattern.replace(/[^dmyVSEHMD]/g,' ').replace(/  +/g, ' ').split(" ").filter(function(e){
 					return e
 				});
@@ -509,14 +523,160 @@ app = {
 						return;
 					}
 					var data = app.views.displayStats.parseImport(text,pattern) // rip
+					toImport.push(data);
 					var nid = app.stores.trips.create(data);
 					app.views.displayTrip.showEntry(nid); //
 					app.session.displayedData[nid] = true; //
 				});
 				app.session.stats.needRefresh = true; //
+				M.toast({html: 'Data imported'});
 				this.calcStats();
 				this.showStats();
+			},
+			startExport: function(){
+				$('#stats-export-month').val('');
+				$('#stats-export-year').val('');
+				$('#stats-export-print').val('Ready to generate');
+				M.textareaAutoResize($('#stats-export-print'));
+				M.updateTextFields();
+			},
+			exportFormat: {
+				'd': function(data){
+					return data['date-ddmmyy'].substring(0,2);
+				},
+				'm': function(data){
+					return data['date-ddmmyy'].substring(2,4);
+				},
+				'y': function(data){
+					return data['date-ddmmyy'].substring(4,6);
+				},
+				'V': function(data){
+					return data['plate'];
+				},
+				'S': function(data){
+					return data['odo-start'];
+				},
+				'E': function(data){
+					return data['odo-end'];
+				},
+				'H': function(data){
+					return data['date-hhmm'].substring(0,2);
+				},
+				'M': function(data){
+					return data['date-hhmm'].substring(3,5);
+				},
+				'D': function(data){
+					return data['mileage'].slice(0,-2);
+				},
+				'P': function(data){
+					return data['platform'];
+				},
+				'\#': function(data){
+					return app.session.nowPrinting;
+				}
+			},
+			checkExportFormat: function(){
+				var displayStats = app.views.displayStats; // rip
+				var format = $("#stats-export-format").val();
+				var check = "";
+				var ok = true;
+				for(var i=0;i<format.length;i++){
+					var s = format[i];
+					if(s=='!'){
+						if(i == format.length-1){
+							ok = false;
+							check += 'Missing character after "!"\n';
+						} else if (displayStats.exportFormat[format[i+1]] == undefined){
+							ok = false;
+							check += 'Unknown format "!' + format[i+1] + '"\n';
+						}
+						i++;
+					}
+				}
+				if(check == ""){
+					check = "Ready to Generate\n";
+				}
+				check = check.slice(0,-1);
+				$("#stats-export-print").val(check);
+				if(ok){
+					$('#stats-export-generate').removeClass('disabled');
+				} else {
+					$('#stats-export-generate').addClass('disabled');
+				}
+				M.updateTextFields();
+				M.textareaAutoResize($('#stats-export-print'));
+			},
+			generateExport: function(){
+				var displayStats = app.views.displayStats; // rip
+				var trips = app.stores.trips;
+				var format = $('#stats-export-format').val();
+				var month = -1;
+				if($('#stats-export-month').val()!=""){
+					month = Number($('#stats-export-month').val()) - 1;
+				}
+				var year = -1;
+				if($('#stats-export-year').val()!=""){
+					year = Number($('#stats-export-year').val());
+					if(year < 100){
+						year += 2000;
+					}
+				}
+				var print = [];
+
+				var allSorted = [];
+				$.each(trips.data,function(id,val){
+					allSorted.push({'id':id,'sort':val['date-sort']});
+				});
+				allSorted.sort(function(a,b){
+					return a['sort'] - b['sort'];
+				});
+
+				app.session.nowPrinting = 0;
+				$.each(allSorted,function(idx,val){
+					var data = trips.data[val['id']];
+					var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm')
+					if(month!=-1 && month != thisMoment.month()){
+						return;
+					}
+					if(year!=-1 && year != thisMoment.year()){
+						return;
+					}
+					var thisPrint = ""
+					app.session.nowPrinting += 1;
+					for(var i=0;i<format.length;i++){
+						var s = format[i];
+						if(s=='!'){
+							var p = format[i+1];
+							thisPrint += displayStats.exportFormat[p](data);
+							i++; 
+						} else {
+							thisPrint += s;
+						}
+					}
+					print.push(thisPrint);
+				});
+				print = print.join('\n');
+				$("#stats-export-print").val(print);
+				M.updateTextFields();
+				M.textareaAutoResize($('#stats-export-print'));
+			},
+			copyExport: function(){
+				$("#stats-export-print").select();
+				document.execCommand('copy');
+				$("#stats-export-print").select();
+				M.toast({html: 'Export copied'});
 			}
+		},
+		utils: {
+			init: function(){
+				this.numberOnly();
+			},
+			numberOnly: function(){
+				$('.utils-number-only').on('input',function(){
+					$(this).val($(this).val().replace(/\D/g,''));
+					$(this).change();
+				});
+			},
 		}
 	},
 	restricted: {
