@@ -134,9 +134,10 @@ app = {
 				twelveHour: false,
 				autoClose: true,
 				container: 'body',
-				onClose: function(){
+				onCloseStart: function(){
 					app.views.editTrip.validate();
-				}
+					setTimeout(0,function(){$('#edit-trip-date-hhmm').blur();});
+				},
 			});
 			this.editTrip.init();
 			this.displayTrip.init();
