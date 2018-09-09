@@ -509,6 +509,7 @@ app = {
 				}
 				M.updateTextFields();
 				M.textareaAutoResize($('#stats-import-check'));
+				M.textareaAutoResize($('#stats-import-input'));
 			},
 			endImport: function(){
 				var source = $('#stats-import-input').val().split("\n");
