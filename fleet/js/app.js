@@ -602,6 +602,9 @@ app = {
 				},
 				'\#': function(data){
 					return app.session.nowPrinting;
+				},
+				'T': function(data){
+					return '\t';
 				}
 			},
 			checkExportFormat: function(){
