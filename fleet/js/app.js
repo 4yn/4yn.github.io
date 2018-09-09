@@ -3,6 +3,28 @@ app = {
 		deepCopy: function(obj){
 			return JSON.parse(JSON.stringify(obj));
 		},
+		deployServiceWorker: function(){
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', function() {
+					navigator.serviceWorker.register('/sw.js').then(function(registration) {
+						console.log('ServiceWorker registration successful with scope: ', registration.scope);
+					}, function(err) {
+						console.log('ServiceWorker registration failed: ', err);
+					});
+				});
+			}
+		},
+		addToHomeScreen: function(){
+			window.addEventListener('beforeinstallprompt', (e) => {
+				e.preventDefault();
+				$('#stats-add-to-home-screen').show();
+				$('#stats-add-to-home-screen').click(function(){
+					this.hide;
+					e.prompt();
+				});
+				app.session.deferredPrompt = e; //
+			});
+		},
 		init: function(){
 			var padZero = function(len){
 				var str = app.utils.deepCopy(this);
@@ -10,6 +32,8 @@ app = {
 				return str;
 			};
 			String.prototype.padZero = padZero;
+			this.deployServiceWorker();
+			this.addToHomeScreen();
 		}
 	},
 
@@ -87,6 +111,7 @@ app = {
 			needRefresh: true
 		},
 		nowPrinting: 0,
+		deferredPrompt: null
 	},
 
 	views: {
