@@ -390,6 +390,8 @@ app = {
 				$('#stats-import-check').val("");
 				$('#stats-import-input').val("");
 				$('#stats-import-done').addClass('disabled');
+				M.textareaAutoResize($('#stats-import-input'));
+				M.textareaAutoResize($('#stats-import-check'));
 				M.updateTextFields();
 			},
 			importFormat: {
