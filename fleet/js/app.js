@@ -348,6 +348,7 @@ app = {
 				$('#stats-export-format').change(function(){displayStats.checkExportFormat()});
 				$('#stats-export-generate').click(function(){displayStats.generateExport()});
 				$('#stats-export-copy').click(function(){displayStats.copyExport()});
+				$('#stats-force-update').click(function(){displayStats.forceUpdate()});
 			},
 			setChartGlobals: function(){
 				Chart.defaults.global.defaultFontColor = '#212121';
@@ -770,6 +771,15 @@ app = {
 				document.execCommand('copy');
 				$("#stats-export-print").select();
 				M.toast({html: 'Export copied'});
+			},
+			forceUpdate: function(){
+				if(confirm('Force update of app? (Please be connected to the Internet)')){
+					navigator.serviceWorker.getRegistrations().then(function(registrations) {
+						for(let registration of registrations) {
+							registration.unregister()
+						}
+					});
+				}
 			}
 		},
 		utils: {
