@@ -424,13 +424,6 @@ app = {
 					nextChart.show();
 				});
 
-				// show refresh button
-				if(navigator.serviceWorker.controller!=null){
-					$('stats-force-update').show();
-				} else {
-					$('stats-force-update').hide();
-				}
-
 				// draw chart
 				var ctxA = $('canvas#display-stats-history-A');
 				var ctxB = $('canvas#display-stats-history-B');
