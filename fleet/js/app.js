@@ -126,6 +126,7 @@ app = {
 			$('.tabs').tabs();
 			$('.fixed-action-btn').floatingActionButton();
 			$('.modal').modal();
+			$('.tooltipped').tooltip();
 			$('.datepicker').datepicker({
 				format: 'ddmmyy',
 				yearRange: 2,
@@ -146,6 +147,9 @@ app = {
 					setTimeout(0,function(){$('#edit-trip-date-hhmm').blur();});
 				},
 			});
+			if('ontouchstart' in window && !window.matchMedia('(display-mode: standalone)').matches){
+				$('#nav-save-prompt').show();
+			}
 			this.editTrip.init();
 			this.displayTrip.init();
 			this.displayStats.init();
@@ -420,8 +424,16 @@ app = {
 					nextChart.show();
 				});
 
+				// show refresh button
+				if(navigator.serviceWorker.controller!=null){
+					$('stats-force-update').show();
+				} else {
+					$('stats-force-update').hide();
+				}
+
 				// draw chart
-				var ctx = $('canvas#display-stats-history');
+				var ctxA = $('canvas#display-stats-history-A');
+				var ctxB = $('canvas#display-stats-history-B');
 				var labels = [];
 				for(var i=-13;i<=0;i++){
 					labels.push(moment().add(i,'days').format('DD/MM'));
@@ -430,11 +442,13 @@ app = {
 				$.each(stats['platforms-last-twoweek'], function(platform,data){
 					datasets.push({
 						'label' : app.restricted.plateToPlatform[platform] || platform + '/???',
-						'backgroundColor' : Chart.helpers.color(app.restricted.plateToColor[platform] || '#000000').alpha(0.8).rgbString(),
+						'backgroundColor' : Chart.helpers.color(app.restricted.plateToColor[platform] || '#000000').alpha(0.3).rgbString(),
 						'borderColor' : app.restricted.plateToColor[platform] || '#000000',
+						'borderWidth' : 2,
 						'data' : data}); //
 				});
-				var chart = new Chart(ctx, {
+
+				var chartA = new Chart(ctxA, {
 					'type': 'bar',
 					'data': {
 						'labels': labels,
@@ -442,31 +456,38 @@ app = {
 					},
 					'options': {
 						'responsive': true,
-						'hover': {
-							'mode': 'nearest',
-							'intersect': true
-						},
-						'legend': {
-							'labels' : {
-								'boxWidth': 20
-							}
-						},
+						'hover': { 'mode': 'nearest', 'intersect': true },
+						'legend': { 'labels' : { 'boxWidth': 20 } },
+						'tooltips' : { 'position' : 'average', 'mode' : 'index', 'intersect' : false },
 						'scales': {
-							'xAxes': [{
-								'scaleLabel': {
-									'display': true,
-									'labelString': 'Date',
-								}
-							}],
+							'xAxes': [{ 'scaleLabel': { 'display': true, 'labelString': 'Date', } }],
 							'yAxes': [{
-								'ticks':{
+								'ticks' : { 'callback' : function(value,index,values){ return value + 'km';},
+								'min' : 0},
+								'scaleLabel' : { 'display' : true, 'labelString' : 'Mileage', }
+							}]
+						}
+					}
+				});
+				var chartB = new Chart(ctxB, {
+					'type': 'horizontalBar',
+					'data': {
+						'labels': labels,
+						'datasets': datasets
+					},
+					'options': {
+						'responsive': true,
+						'hover': { 'mode': 'nearest', 'intersect': true },
+						'legend': { 'labels' : { 'boxWidth': 20 } },
+						'tooltips' : { 'position' : 'average', 'mode' : 'index', 'intersect' : false },
+						'scales': {
+							'yAxes': [{ 'scaleLabel': { 'display': true, 'labelString': 'Date', } }],
+							'xAxes': [{
+								'ticks' : {
 									'callback' : function(value,index,values){ return value + 'km';},
-									'min': 0,
+									'min' : 0
 								},
-								'scaleLabel': {
-									'display': true,
-									'labelString': 'Mileage',
-								}
+								'scaleLabel' : { 'display' : true, 'labelString' : 'Mileage', }
 							}]
 						}
 					}
@@ -776,7 +797,8 @@ app = {
 				if(confirm('Force update of app? (Please be connected to the Internet)')){
 					navigator.serviceWorker.getRegistrations().then(function(registrations) {
 						for(let registration of registrations) {
-							registration.unregister()
+							registration.unregister();
+							setTimeout(function(){location.reload()},50)
 						}
 					});
 				}

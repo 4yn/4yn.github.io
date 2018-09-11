@@ -7,8 +7,10 @@ body{
 }
 
 .logo-wrapper{
-	flex: row nowrap;
-	justify-content: center;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
 	align-items: center;
 }
 
@@ -97,11 +99,12 @@ body{
 }
 
 .display-trip-date-center{
-	margin-top: -7px;
+	margin-top: -8px;
 	font-size: 45px;
 }
 
 .display-trip-date-bottom{
+	margin-top: -4px;
 	font-size: 14px;
 }
 

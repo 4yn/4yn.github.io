@@ -1,4 +1,4 @@
-var CACHE_NAME = 'fleet-0010';
+var CACHE_NAME = 'fleet-0011';
 
 var urlsToCache = [
 	'./',

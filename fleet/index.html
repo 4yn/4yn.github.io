@@ -23,10 +23,14 @@
 	<body>
 		<div class="navbar-fixed">
 			<nav class="nav-wrapper blue darken-1 white-text valign-wrapper">
-				<div class="container valign-wrapper logo-wrapper">
+				<div class="container logo-wrapper">
 					<a href="#" class="brand-logo">
 						<span><div id="logo"></div></span>
 					</a>
+					<span></span>
+					<ul>
+						<li><a href="javascript:;" class="btn-floating pulse blue lighten-2 tooltipped" data-position="left" data-tooltip="To prevent data loss, add this site to your home screen" id="nav-save-prompt" style="display: none;"><i class="material-icons left">save</i></a></li>
+					</ul>
 				</div>
 			</nav>
 		</div>
@@ -140,7 +144,8 @@
 					<div class="col s12"><div class="card">
 						<div class="card-content">
 							<span class="card-title">2 Week History</span>
-							<canvas id="display-stats-history" width="200" height="100"></canvas>
+							<canvas id="display-stats-history-A" class="hide-on-small-only" width="16" height="9"></canvas>
+							<canvas id="display-stats-history-B" class="hide-on-med-and-up" width="10" height="14"></canvas>
 						</div>
 					</div></div>
 					<div class="col s12 m6 l4 display-stats-platform" id="display-stats-platform-template" style="display: none;"><div class="card">
@@ -158,7 +163,7 @@
 							<a href="#stats-export-modal" class="btn-large blue modal-trigger" id="stats-export-start"><i class="material-icons left">content_paste</i>Export Text</a>
 							<a href="#" class="btn-large teal disabled" id="stats-export-excel"><i class="material-icons left">assessment</i>Export (CSV/Excel)</a>
 							<a href="javascript:;" class="btn-large orange darken-4" id="stats-add-to-home-screen" style="display: none;"><i class="material-icons left">home</i>Add to Home Screen</a>
-							<a href="javascript:;" class="btn-large deep-orange darken-4" id="stats-force-update""><i class="material-icons left">refresh</i>Force Update App</a>
+							<a href="javascript:;" class="btn-large deep-orange darken-4" id="stats-force-update" style="display: none;><i class="material-icons left">refresh</i>Force Update App</a>
 						</div>
 					</div></div>
 				</div>
