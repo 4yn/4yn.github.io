@@ -6,11 +6,7 @@ app = {
 		deployServiceWorker: function(){
 			if ('serviceWorker' in navigator) {
 				window.addEventListener('load', function() {
-					navigator.serviceWorker.register('./sw.js').then(function(registration) {
-						console.log('ServiceWorker registration successful with scope: ', registration.scope);
-					}, function(err) {
-						console.log('ServiceWorker registration failed: ', err);
-					});
+					navigator.serviceWorker.register('./sw.js');
 				});
 			}
 		},
@@ -67,6 +63,7 @@ app = {
 			populate(id){
 				var data = this.data[id]
 				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || data['plate'].substring(0,2) + '/???';
+				data['color'] = app.restricted.plateToColor[data['plate'].substring(0,2)] || '#212121';
 				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhmm'];
 				var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm')
 				data['date-sort'] = Number(thisMoment.format('X')) * 1000000 + Number(data['odo-start']);
@@ -91,8 +88,18 @@ app = {
 				trips.nextId = Math.max(trips.nextId,Number(key)+1);
 			}
 		},
+		persist : function(){
+			if(navigator.storage && navigator.storage.persist){
+				navigator.storage.persisted().then(persistent => {
+					if(!persistent){
+						navigator.storage.persist()
+					}
+				})
+			}
+		},
 		init: function(){
 			this.lf = localforage
+			this.persist();
 			this.trips.DB = this.lf.createInstance({name:"tripDB"});
 			this.trips.data = {};
 			this.trips.DB.iterate(this.trips.import,function(){
@@ -206,8 +213,9 @@ app = {
 				var entry = $('#display-trip-' + id);
 				for(var i=0;i<fieldsDisplay.length;i++){
 					entry.find('.display-trip-'+fieldsDisplay[i]).text(entryData[fieldsDisplay[i]]);
-					//entry.find('.display-trip-'+fieldsDisplay[i]).attr('data-val',entryData[fieldsDisplay[i]])
 				}
+				// color
+				entry.find('.display-trip-vehiclebox .card').css('background-color',entryData['color']);
 				// maintain sort
 				while(1){
 					var next = entry.next();
@@ -329,6 +337,7 @@ app = {
 		displayStats: {
 			init: function(){
 				var displayStats = this;
+				this.setChartGlobals();
 				$('#tab-stats-btn').click(function(){displayStats.calcStats();displayStats.showStats()});
 				$('#stats-nuke').click(function(){displayStats.clearData()});
 				$('#stats-import-start').click(function(){displayStats.startImport()});
@@ -339,6 +348,11 @@ app = {
 				$('#stats-export-format').change(function(){displayStats.checkExportFormat()});
 				$('#stats-export-generate').click(function(){displayStats.generateExport()});
 				$('#stats-export-copy').click(function(){displayStats.copyExport()});
+			},
+			setChartGlobals: function(){
+				Chart.defaults.global.defaultFontColor = '#212121';
+				// Chart.defaults.global.defaultFontSize = '15';
+				Chart.defaults.global.defaultFontFamily = '"-apple-system","BlinkMacSystemFont","Segoe UI","Roboto","Oxygen-Sans","Ubuntu","Cantarell","Helvetica Neue","sans-serif"';
 			},
 			calcStats: function(){
 
@@ -366,9 +380,15 @@ app = {
 					stats['platforms-mileage'][platform] = stats['platforms-mileage'][platform] + mileage || mileage;
 					stats['platforms-days-since-used'][platform] = Math.min(daysSinceUsed,stats['platforms-days-since-used'][platform]) || daysSinceUsed;
 					stats['total-mileage'] = stats['total-mileage'] + mileage;
-					if(stats['vehicles-favorite'] == null ||
+					if(stats['vehicles-favorite'] == undefined ||
 						stats['vehicles-mileage'][stats['vehicles-favorite']] < stats['vehicles-mileage'][plate]){
 						stats['vehicles-favorite'] = plate;
+					}
+					if(daysSinceUsed < 14){
+						if(stats['platforms-last-twoweek'][platform] == undefined){
+							stats['platforms-last-twoweek'][platform] = Array(14).fill(0);
+						}
+						stats['platforms-last-twoweek'][platform][13 - daysSinceUsed] += mileage;
 					}
 				});
 			},
@@ -394,8 +414,61 @@ app = {
 						result += 'requires JIT';
 					}
 					nextChart.find('.display-stats-platform-jit').text(result);
+					nextChart.find('.card').css('backgroundColor',app.restricted.plateToColor[id] || '#212121') //
 					$('#display-stats-platform-template').after(nextChart);
 					nextChart.show();
+				});
+
+				// draw chart
+				var ctx = $('canvas#display-stats-history');
+				var labels = [];
+				for(var i=-13;i<=0;i++){
+					labels.push(moment().add(i,'days').format('DD/MM'));
+				}
+				var datasets = [];
+				$.each(stats['platforms-last-twoweek'], function(platform,data){
+					datasets.push({
+						'label' : app.restricted.plateToPlatform[platform] || platform + '/???',
+						'backgroundColor' : Chart.helpers.color(app.restricted.plateToColor[platform] || '#000000').alpha(0.8).rgbString(),
+						'borderColor' : app.restricted.plateToColor[platform] || '#000000',
+						'data' : data}); //
+				});
+				var chart = new Chart(ctx, {
+					'type': 'bar',
+					'data': {
+						'labels': labels,
+						'datasets': datasets
+					},
+					'options': {
+						'responsive': true,
+						'hover': {
+							'mode': 'nearest',
+							'intersect': true
+						},
+						'legend': {
+							'labels' : {
+								'boxWidth': 20
+							}
+						},
+						'scales': {
+							'xAxes': [{
+								'scaleLabel': {
+									'display': true,
+									'labelString': 'Date',
+								}
+							}],
+							'yAxes': [{
+								'ticks':{
+									'callback' : function(value,index,values){ return value + 'km';},
+									'min': 0,
+								},
+								'scaleLabel': {
+									'display': true,
+									'labelString': 'Mileage',
+								}
+							}]
+						}
+					}
 				});
 			},
 			clearData: function(){
@@ -713,13 +786,21 @@ app = {
 	},
 	restricted: {
 		plateToPlatform: {
+			'32': '32/LR',
 			'34': '34/OUV',
 			'35': '35/JEEP',
-			'46': '46/MB',
 			'41': '41/GP',
-			'59': '59/MB290',
-			'32': '32/LR'
-		}
+			'46': '46/MB/DV',
+			'59': '59/MB290'
+		},
+		plateToColor: {
+			'32': '#8C3134',
+			'34': '#A38125',
+			'35': '#588019',
+			'41': '#1982C4',
+			'46': '#6A4C93',
+			'59': '#343E3D'
+		},
 	}
 }
 

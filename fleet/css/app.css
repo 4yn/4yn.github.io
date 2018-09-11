@@ -105,12 +105,18 @@ body{
 	font-size: 14px;
 }
 
+
+.display-trip-vehiclebox .card{
+	margin: 0;
+	padding: 5px;
+}
+
 .display-trip-plate{
-	font-size: 35px;
+	font-size: 30px;
 }
 
 .display-trip-mileage{
-	font-size: 35px;
+	font-size: 20px;
 }
 
 .display-trip-platform{
