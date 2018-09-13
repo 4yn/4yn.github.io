@@ -279,6 +279,9 @@ app = {
 			validate: function(){
 				var fail = 0;
 				fail += $('#edit-trip-modal input:text').filter(function(){return $(this).val() == "";}).length;
+				if(Number($('#edit-trip-odo-end').val()) < Number($('#edit-trip-odo-start').val())){
+					fail += 1;
+				}
 				if(fail == 0){
 					$('#edit-trip-done.disabled').removeClass('disabled');
 				} else {
@@ -576,6 +579,14 @@ app = {
 					'odo-start': readData['S'],
 					'odo-end': readData['E']
 				}
+				if(readData['D']){
+					if(Number(readData['D']) != Number(data['odo-end']) - Number(data['odo-start'])){
+						throw 'Mileage incorrect';
+					}
+				}
+				if(Number(data['odo-end']) < Number(data['odo-start'])){
+					throw 'Negative mileage';
+				}
 				try{
 					var thisMoment = moment(data['date-ddmmyy'] + ' ' + data['date-hhmm'],'DDMMYY HH:mm');
 					if(!thisMoment.isValid()){
@@ -791,7 +802,7 @@ app = {
 					navigator.serviceWorker.getRegistrations().then(function(registrations) {
 						for(let registration of registrations) {
 							registration.unregister();
-							setTimeout(function(){location.reload()},50)
+							setTimeout(function(){location.reload()},50);
 						}
 					});
 				}
