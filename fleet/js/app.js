@@ -190,14 +190,14 @@ app = {
 				var now = new Date();
 				// if(window.innerHeight + window.scrollY > document.body.offsetHeight
 				elem = $('#tab-trips')[0]
-				if(elem.scrollHeight - elem.scrollTop === elem.clientHeight
+				if(Math.abs(0.0 + elem.scrollHeight - elem.scrollTop - elem.clientHeight) < 5
 					&& now - app.session.lastDisplayed >= 500){
 					app.session.lastDisplayed = now;
 					app.views.displayTrip.showPage();
 				}
 			},
 			showPage: function(){
-				for(var i=0;i<10;i++){
+				for(var i=0;i<12;i++){
 					this.showNext();
 				}
 			},
