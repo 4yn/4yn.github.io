@@ -802,7 +802,7 @@ app = {
 					navigator.serviceWorker.getRegistrations().then(function(registrations) {
 						for(let registration of registrations) {
 							registration.unregister();
-							setTimeout(function(){location.reload()},50);
+							setTimeout(function(){(window.location.reload)()},50);
 						}
 					});
 				}
