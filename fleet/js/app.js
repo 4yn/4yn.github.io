@@ -61,16 +61,60 @@ app = {
 				this.populate(id);
 			},
 			populate(id){
+				var fleetProp = app.stores.fleet.getFleetProp;
 				var data = this.data[id]
-				data['platform'] = app.restricted.plateToPlatform[data['plate'].substring(0,2)] || data['plate'].substring(0,2) + '/???';
-				data['color'] = app.restricted.plateToColor[data['plate'].substring(0,2)] || '#212121';
+				data['platform'] = fleetProp(data['plate'],'lt');
+				data['color'] = fleetProp(data['plate'],'lc');
 				data['date-stamp'] = data['date-ddmmyy'] + ' ' + data['date-hhmm'];
 				var thisMoment = moment(data['date-stamp'],'DDMMYY HH:mm')
+				data['date-unix'] = Number(thisMoment.format('X'));
 				data['date-sort'] = Number(thisMoment.format('X')) * 1000000 + Number(data['odo-start']);
 				data['date-top'] = thisMoment.format('HH:mm ddd')
 				data['date-center'] = thisMoment.format('DD')
 				data['date-bottom'] = thisMoment.format('MMM YY')
 				data['odo'] = data['odo-start'] + ' - ' + data['odo-end'];
+			},
+			checkLB(id){
+				var data = this.data[id];
+				var lb = null;
+				$.each(this.data, function(id,entry){
+					if(entry['plate']!=data['plate']) return;
+					if(entry['date-unix']<data['date-unix']){
+						if(!lb) lb = entry
+						else if(entry['date-unix']>lb['date-unix']) lb = entry
+					}
+				});
+				if(lb && data['odo-start']<lb['odo-end']){
+					return "Odometer clashes with previous journey on " + lb['date-stamp'] + '</br>'
+				} else {
+					return null;
+				}
+			},
+			checkUB(id){
+				var data = this.data[id];
+				var ub = null;
+				$.each(this.data, function(id,entry){
+					if(entry['plate']!=data['plate']) return;
+					if(entry['date-unix']>data['date-unix']){
+						if(!ub) ub = entry
+						else if(entry['date-unix']<ub['date-unix']) ub = entry
+					}
+				});
+				if(ub && data['odo-end']>ub['odo-start']){
+					return "Odometer clashes with future journey on " + ub['date-stamp'] + '</br>'
+				} else {
+					return null;
+				}
+			},
+			checkService(id){
+				var data = this.data[id];
+				var fleetProp = app.stores.fleet.getFleetProp
+				var leftMileage = Number(fleetProp(data['plate'],'vsm')) - Number(data['odo-end']);
+				if(leftMileage < 300){
+					return "Vehicle has " + leftMileage + " km until next servicing" + '</br>';
+				} else {
+					return null
+				}
 			},
 			delete: function(id){
 				delete this.data[id];
@@ -88,11 +132,66 @@ app = {
 				trips.nextId = Math.max(trips.nextId,Number(key)+1);
 			}
 		},
+		fleet: {
+			DB: null,
+			data: null,
+			import: function(value, key, idx){
+				var fleet = app.stores.fleet; //rip
+				fleet.data[key] = value;
+			},
+			setFleetKey: function(fleetKey){
+				var fleet = app.stores.fleet; // rip
+				fleet.DB.setItem('fleetKey',fleetKey);
+				fleet.data['fleetKey'] = fleetKey;
+			},
+			loadFleet: function(){
+				if(app.stores.fleet.data['fleetKey']==undefined || app.stores.fleet.data['fleetKey']==""){
+					app.stores.fleet.setFleetCache({}); //
+				};
+				$.ajax({
+					url: 'https://spreadsheets.google.com/feeds/list/' + app.stores.fleet.data['fleetKey'] + '/1/public/basic?alt=json',
+					dataType: "json",
+					success: function(data){
+						var fleetData = {};
+						$.each(data['feed']['entry'], function(idx, value){
+							var k = value['title']['$t'];
+							fleetData[k] = {};
+							$.each(value['content']['$t'].split(','), function(idx, entry){
+								fleetData[k][entry.split(':')[0].replace(/\s/g, '')] = entry.split(':')[1].replace(/\s/g, '');
+							})
+						});
+						app.stores.fleet.setFleetCache(fleetData); // rippp
+						setTimeout(function(){(window.location.reload)()},50);
+					}
+				})
+			},
+			setFleetCache: function(fleetData){
+				var fleet = app.stores.fleet; // rip
+				fleet.DB.setItem('fleetData',fleetData);
+				fleet.data['fleetData'] = fleetData;
+			},
+			defaultFleetProp: {
+				'lt': '???',
+				'lc': '#212121',
+				'vsm': '9999999'
+			},
+			getFleetProp: function(vehicle, property){
+				var fleet = app.stores.fleet;
+				if(fleet.data['fleetData'] && vehicle in fleet.data['fleetData']){
+					return fleet.data['fleetData'][vehicle][property];
+				} else {
+					if(property == 'lt'){
+						return vehicle;
+					}
+					return fleet.defaultFleetProp[property];
+				}
+			},
+		},
 		persist : function(){
 			if(navigator.storage && navigator.storage.persist){
 				navigator.storage.persisted().then(persistent => {
 					if(!persistent){
-						navigator.storage.persist()
+						navigator.storage.persist();
 					}
 				})
 			}
@@ -100,12 +199,16 @@ app = {
 		init: function(){
 			this.lf = localforage
 			this.persist();
+			this.fleet.DB = this.lf.createInstance({name:"fleetDB"});
+			this.fleet.data = {};
+			this.fleet.DB.iterate(this.fleet.import);
 			this.trips.DB = this.lf.createInstance({name:"tripDB"});
 			this.trips.data = {};
 			this.trips.DB.iterate(this.trips.import,function(){
 				app.views.displayTrip.showPage();
 				app.views.displayTrip.showPage();
 			});
+			//this.fleet.loadFleet();
 		}
 	},
 
@@ -158,9 +261,10 @@ app = {
 		},
 		preload: {
 			donePreload: function(){
-				$('.preload-window').fadeOut(1000, function(){
-					this.remove();
-				});
+				$('.preload-window').fadeOut(1000);
+			},
+			restartPreload: function(){
+				$('.preload-window').fadeIn(1000);
 			}
 		},
 		displayTrip: {
@@ -220,6 +324,19 @@ app = {
 				}
 				// color
 				entry.find('.display-trip-vehiclebox .card').css('background-color',entryData['color']);
+				// lower bound check
+				var checkLB = app.stores.trips.checkLB(id);
+				var checkUB = app.stores.trips.checkUB(id);
+				var checkService = app.stores.trips.checkService(id);
+				if(checkLB || checkUB || checkService){
+					checkLB = checkLB || ""
+					checkUB = checkUB || ""
+					checkService = checkService || ""
+					error = checkUB + checkLB + checkService
+					entry.children().append('<div class="card-action">' + error + '</div>');
+				} else {
+					entry.find('.card-action').remove()
+				}
 				// maintain sort
 				while(1){
 					var next = entry.next();
@@ -356,6 +473,8 @@ app = {
 				$('#stats-export-generate').click(function(){displayStats.generateExport()});
 				$('#stats-export-copy').click(function(){displayStats.copyExport()});
 				$('#stats-force-update').click(function(){displayStats.forceUpdate()});
+				$('#stats-set-fleet').click(function(){displayStats.setFleetKey()});
+				$('#stats-reload-fleet').click(function(){app.stores.fleet.loadFleet()}); // rip
 			},
 			setChartGlobals: function(){
 				Chart.defaults.global.defaultFontColor = '#212121';
@@ -374,6 +493,7 @@ app = {
 
 				stats['vehicles-mileage'] = {};
 				stats['platforms-mileage'] = {};
+				stats['platforms-color'] = {};
 				stats['platforms-days-since-used'] = {};
 				stats['platforms-last-twoweek'] = {}
 				stats['total-mileage'] = 0;
@@ -381,11 +501,12 @@ app = {
 				$.each(trips.data, function(id,data){
 					var plate = data['plate']
 					var mileage = Math.max(Number(data['odo-end']) - Number(data['odo-start']),0);
-					var platform = plate.substring(0,2);
+					var platform = app.stores.fleet.getFleetProp(plate,'lt'); // rip
 					var thisMoment = moment(data['date-ddmmyy'],'DDMMYY');
 					var daysSinceUsed = moment().diff(thisMoment,'days')
 					stats['vehicles-mileage'][plate] = stats['vehicles-mileage'][plate] + mileage || mileage;
 					stats['platforms-mileage'][platform] = stats['platforms-mileage'][platform] + mileage || mileage;
+					stats['platforms-color'][platform] = app.stores.fleet.getFleetProp(plate,'lc');
 					stats['platforms-days-since-used'][platform] = Math.min(daysSinceUsed,stats['platforms-days-since-used'][platform]) || daysSinceUsed;
 					stats['total-mileage'] = stats['total-mileage'] + mileage;
 					if(stats['vehicles-favorite'] == undefined ||
@@ -410,8 +531,9 @@ app = {
 				$('.display-stats-platform').remove();
 				$('#display-stats-platform-template').toggleClass('display-stats-platform');
 				$.each(stats['platforms-days-since-used'], function(id,data){
+					var fleetProp = app.stores.fleet.getFleetProp; // rip
 					var nextChart = $('#display-stats-platform-template').clone();
-					nextChart.find('.display-stats-platform-label').text(app.restricted.plateToPlatform[id] || id + "/???")
+					nextChart.find('.display-stats-platform-label').text(id)
 					nextChart.find('.display-stats-platform-mileage').text(stats['platforms-mileage'][id] + 'km')
 					var result = 'Driven ' + data + ' day' + ((data==1)?'':'s') + ' ago, ';
 					if(data < 10){
@@ -422,7 +544,7 @@ app = {
 						result += 'requires JIT';
 					}
 					nextChart.find('.display-stats-platform-jit').text(result);
-					nextChart.find('.card').css('backgroundColor',app.restricted.plateToColor[id] || '#212121') //
+					nextChart.find('.card').css('backgroundColor',stats['platforms-color'][id]) //
 					$('#display-stats-platform-template').after(nextChart);
 					nextChart.show();
 				});
@@ -437,9 +559,9 @@ app = {
 				var datasets = [];
 				$.each(stats['platforms-last-twoweek'], function(platform,data){
 					datasets.push({
-						'label' : app.restricted.plateToPlatform[platform] || platform + '/???',
-						'backgroundColor' : Chart.helpers.color(app.restricted.plateToColor[platform] || '#000000').alpha(0.3).rgbString(),
-						'borderColor' : app.restricted.plateToColor[platform] || '#000000',
+						'label' : platform,
+						'backgroundColor' : Chart.helpers.color(app.session.stats['platforms-color'][platform] || '#000000').alpha(0.3).rgbString(),
+						'borderColor' : app.session.stats['platforms-color'][platform],
 						'borderWidth' : 2,
 						'data' : data}); //
 				});
@@ -806,6 +928,13 @@ app = {
 						}
 					});
 				}
+			},
+			setFleetKey: function(){
+				var fleetKey = prompt("Paste your Fleet Key below",app.stores.fleet.data['fleetKey']);
+				if(fleetKey != null){
+					app.stores.fleet.setFleetKey(fleetKey);
+					app.stores.fleet.loadFleet();
+				}
 			}
 		},
 		utils: {
@@ -820,24 +949,6 @@ app = {
 			},
 		}
 	},
-	restricted: {
-		plateToPlatform: {
-			'32': '32/LR',
-			'34': '34/OUV',
-			'35': '35/JEEP',
-			'41': '41/GP',
-			'46': '46/MB/DV',
-			'59': '59/MB290'
-		},
-		plateToColor: {
-			'32': '#8C3134',
-			'34': '#A38125',
-			'35': '#588019',
-			'41': '#1982C4',
-			'46': '#6A4C93',
-			'59': '#343E3D'
-		},
-	}
 }
 
 $(document).ready(function(){
